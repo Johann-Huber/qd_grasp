@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<robot name="001_chips_can">
+	<link name="_name">
+		<visual>
+			<origin rpy="0 0 0" xyz="0 0 0" />
+			<geometry>
+				<mesh filename="001_chips_can/poisson/textured.obj" scale="1 1 1" />
+			</geometry>
+			<material name="texture">
+				<color rgba="1.0 1.0 1.0 1.0" />
+			</material>
+		</visual>
+		<collision>
+			<origin rpy="0 0 0" xyz="0 0 0" />
+			<geometry>
+				<mesh filename="001_chips_can/poisson/textured_vhacd.obj" scale="1 1 1" />
+			</geometry>
+		</collision>
+		<inertial>
+			<origin rpy="0 0 0" xyz="-0.006005 0.011113 0.122552" /> 
+			<mass value="0.205" />
+			<inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+		</inertial>
+	</link>
+</robot>

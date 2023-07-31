@@ -1,0 +1,61 @@
+<?xml version="1.0" ?>
+<robot name="kuka_lbr_iiwa_14_r820" xmlns:xacro="http://wiki.ros.org/xacro">
+  <xacro:arg name="arg_gripper" default="2f_140"/>
+  <xacro:property name="gripper" value="$(arg arg_gripper)"/>
+  
+  <xacro:include filename="$(find lbr_iiwa)/urdf/lbr_iiwa_14_r820_macro.xacro"/>
+  <xacro:kuka_lbr_iiwa_14_r820 prefix="kuka_"/>
+  
+  <xacro:if value="${gripper == '2f_140'}">
+      <!--xacro:include filename="$(find robotiq_2f_140_gripper_visualization)/urdf/robotiq_arg2f_140_model.xacro"/-->
+      <xacro:include filename="$(find robotiq_140_gripper_description)/urdf/robotiq_140.urdf.xacro" />
+      <xacro:robotiq_gripper prefix="" MAC="_000000000004"/>
+  </xacro:if>
+
+  <xacro:if value="${gripper == '2f_85'}">
+      <!--xacro:include filename="$(find robotiq_2f_85_gripper_visualization)/urdf/robotiq_arg2f_85_model.xacro"/-->
+      <xacro:include filename="$(find robotiq_85_gripper_description)/urdf/robotiq_85.urdf.xacro" />
+      <xacro:robotiq_85 prefix="" MAC="_000000000004"/>
+  </xacro:if>
+  
+  
+
+  
+  <joint name="kuka_to_robotiq_joint" type="fixed">
+    <origin xyz="0 0 0.1" rpy="0 0 0"/>
+    <parent link="kuka_link_7"/>
+    <child link="robotiq_arg2f_base_link"/>
+  </joint>
+  
+  
+  <link name="base">
+      <inertial>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <mass value="10"/>
+        <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+      </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+          <box size=" 1 2 0.5 "/>
+      </geometry>
+      <material name="Grey"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+          <box size=" 0.5 0.5 0.5 "/>
+      </geometry>
+    </collision>
+    <contact>
+        <lateral_friction value="0.1"/>
+    </contact>
+  </link>
+  
+  <joint name="base_to_kuka" type="fixed">
+    <origin xyz="0 0 0.25" rpy="0 0 0"/>
+    <parent link="base"/>
+    <child link="kuka_base_link"/>
+  </joint>
+  
+</robot>

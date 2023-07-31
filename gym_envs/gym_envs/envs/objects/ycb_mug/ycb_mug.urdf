@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<robot name="025_mug">
+	<link name="_name">
+		<visual>
+			<origin rpy="0 0 0" xyz="0 0 0" />
+			<geometry>
+				<mesh filename="025_mug/google_16k/textured.obj" scale="1 1 1" />
+			</geometry>
+			<material name="texture">
+				<color rgba="1.0 1.0 1.0 1.0" />
+			</material>
+		</visual>
+		<collision>
+			<origin rpy="0 0 0" xyz="0 0 0" />
+			<geometry>
+				<mesh filename="025_mug/google_16k/textured_vhacd.obj" scale="1 1 1" />
+			</geometry>
+		</collision>
+		<inertial>
+			<origin rpy="0 0 0" xyz="-0.018190 0.017067 0.029618" /> 
+			<mass value="0.118" />
+			<inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+		</inertial>
+	</link>
+</robot>
+
+

@@ -1,0 +1,21 @@
+# File produced by Open Asset Import Library (http://www.assimp.sf.net)
+# (assimp v5.0.639693989)
+
+newmtl gray
+Kd 0.63999999 0.63999999 0.63999999
+Ka 0 0 0
+Ks 0.0125 0.0125 0.0125
+Ke 0 0 0
+Ni 1
+Ns 205
+illum 2
+
+newmtl orange
+Kd 0.80000001 0.39843139 0
+Ka 0 0 0
+Ks 0.125 0.125 0.125
+Ke 0 0 0
+Ni 1
+Ns 50
+illum 2
+

@@ -1,0 +1,14 @@
+qibullet
+seaborn
+pyquaternion
+ruamel.yaml
+pyyaml
+deap
+scoop==0.7.1.1
+scikit-learn
+imageio
+gym==0.21.0
+sb3-contrib
+tqdm
+ribs
+cmaes

@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<robot name="035_power_drill">
+	<link name="_name">
+		<visual>
+			<origin rpy="0 0 0" xyz="0 0 -0.02" />
+			<geometry>
+				<mesh filename="035_power_drill/poisson/textured.obj" scale="1 1 1" />
+			</geometry>
+			<material name="texture">
+				<color rgba="1.0 1.0 1.0 1.0" />
+			</material>
+		</visual>
+		<collision>
+			<origin rpy="0 0 0" xyz="0 0 -0.02" />
+			<geometry>
+				<mesh filename="035_power_drill/poisson/textured_vhacd.obj" scale="1 1 1" />
+			</geometry>
+		</collision>
+		<inertial>
+			<origin rpy="0 0 0" xyz="-0.000146 0.014914 0.044118" />
+			<mass value="0.895" />
+			<inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+		</inertial>
+	</link>
+</robot>
