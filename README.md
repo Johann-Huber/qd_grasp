@@ -7,14 +7,14 @@ It also allow to reproduce results from the paper : "Quality Diversity for Grasp
 
 **Status:** *refactoring in progress*
 
+## Before starting
 
-# Before starting
 
-## Recommandations
+### Recommandations
 * use python 3.8.x or 3.9.x: versions >3.10.x cause problems with scoop
 * scoop parallelization requires multiple cpu cores; lower number of threads => slower exploration
 
-# Install
+## Install
 
 ```
 python3 -m venv qdg
@@ -26,9 +26,9 @@ pip3 install -e gym_envs
 pip3 install -e .
 ```
 
-# Examples
+## Examples
 
-## Trajectory generation
+### Trajectory generation
 
 Debug mode, to visualize each evaluation: 
 ```
@@ -41,7 +41,7 @@ python3 -m scoop apply_qd_grasp.py -a me_scs -r kuka_ik -o ycb_power_drill -nbr 
 ```
 
 
-## Visualizing output
+### Visualizing output
 
 To replay successful trajectories from a completed run:
 ```
@@ -57,15 +57,15 @@ Visualise the success archive as fitness heatmap:
 ```
 
 
-# Ressources: 
+## Ressources: 
 
-## Quality diversity
+### Quality diversity
 https://quality-diversity.github.io/
 
-## Compared methods
+### Compared methods
 ...
 
-# TODO :
+## TODO :
 * clean legacy files
 * clean up the pipeline
 * refactore gym_grab
