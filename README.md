@@ -5,12 +5,12 @@ This code allows the generation of repertoires of diverse and high performing gr
 
 It also allow to reproduce results from the paper : "Quality Diversity for Grasping in Robotics" [*under review*]
 
-**Status:** *refactoring in progress*
+**Status:** *refactoring in progress**
 
-## Before starting
+## Before starting
 
+### Recommandations
 
-### Recommandations
 * use python 3.8.x or 3.9.x: versions >3.10.x cause problems with scoop
 * scoop parallelization requires multiple cpu cores; lower number of threads => slower exploration
 
