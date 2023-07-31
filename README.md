@@ -5,7 +5,7 @@ This code allows the generation of repertoires of diverse and high performing gr
 
 It also allow to reproduce results from the paper : "Quality Diversity for Grasping in Robotics" [*under review*]
 
-**Status:** *refactoring in progress**
+**Status:** *refactoring in progress*
 
 ## Before starting
 
@@ -28,7 +28,7 @@ pip3 install -e .
 
 ## Examples
 
-### Trajectory generation
+### Trajectory generation
 
 Debug mode, to visualize each evaluation: 
 ```
@@ -41,7 +41,7 @@ python3 -m scoop apply_qd_grasp.py -a me_scs -r kuka_ik -o ycb_power_drill -nbr 
 ```
 
 
-### Visualizing output
+### Visualizing output
 
 To replay successful trajectories from a completed run:
 ```
