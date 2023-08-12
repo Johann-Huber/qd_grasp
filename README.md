@@ -3,7 +3,7 @@
 
 This code allows the generation of repertoires of diverse and high performing grasping trajectories, with Quality-Diversity methods.
 
-It also allow to reproduce results from the paper : "Quality Diversity for Grasping in Robotics" [*under review*]
+It also allow to reproduce results from the paper : "Quality Diversity under Sparse Reward and Sparse Interaction: Application to Grasping in Robotics" ([draft version](https://arxiv.org/abs/2308.05483))
 
 **Status:** *refactoring in progress*
 
