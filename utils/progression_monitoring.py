@@ -72,7 +72,7 @@ class ProgressionMonitoring:
 
         n_success = outcome_archive.get_n_successful_cells()
         outcome_archive_len = len(outcome_archive)
-        #pdb.set_trace()
+
         self._update_verbose_bars(
             n_success=n_success,
             outcome_archive_len=outcome_archive_len,
@@ -80,32 +80,3 @@ class ProgressionMonitoring:
         )
 
         self._n_eval_tqdm.update(n_eval2add)
-
-
-class ProgressionMonitoringPyRibs(ProgressionMonitoring):
-    def __init__(self, n_budget_rollouts, reinit_research_flg):
-        super().__init__(
-            n_budget_rollouts=n_budget_rollouts, reinit_research_flg=reinit_research_flg
-        )
-
-    def update(self, pop, outcome_archive, n_reinit):
-
-        n_quality_eval = 0
-
-        n_eval2add = len(pop) + n_quality_eval
-        self._n_eval += n_eval2add
-
-        n_success = outcome_archive.get_n_successful_cells()
-        outcome_archive_len = len(outcome_archive)
-
-        self._update_verbose_bars(
-            n_success=n_success,
-            outcome_archive_len=outcome_archive_len,
-            n_reinit=n_reinit,
-        )
-
-        self._n_eval_tqdm.update(n_eval2add)
-
-
-
-

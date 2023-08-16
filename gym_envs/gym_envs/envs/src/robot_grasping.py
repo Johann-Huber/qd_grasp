@@ -1,24 +1,23 @@
+
 import pdb
+
 import os
-from gym import Env, spaces
 from time import sleep
+import numpy as np
+import time
+from pathlib import Path
+
+from gym import Env, spaces
 import pybullet_data
 from pybullet_utils.bullet_client import BulletClient
-from pathlib import Path
-import weakref
-import functools
-import numpy as np
-from collections import OrderedDict
-import time
-import torch as th
 import pybullet as p
-import glob
-import gym_envs
-import utils.constants as consts
-from gym_envs.envs.utils import get_simulation_table_height
-import gym_envs.envs.env_constants as env_consts
 
-from typing import Dict, List, Tuple, Sequence, Callable, Any, Union, Optional
+from gym_envs.envs.src.utils import get_simulation_table_height
+import gym_envs.envs.src.env_constants as env_consts
+
+import utils.constants as consts
+
+from typing import Dict, Any
 try:
     import numpy.typing as npt
     ArrayLike = npt.ArrayLike
@@ -751,7 +750,8 @@ class RobotGrasping(Env):
         pos = np.array(self.object_position)
 
         assert isinstance(obj, str)
-        urdf = Path(__file__).parent/"objects"/obj/f"{obj}.urdf"
+
+        urdf = Path(__file__).parent.parent/"3d_models/objects"/obj/f"{obj}.urdf"
         if not urdf.exists():
             raise ValueError(str(urdf) + " doesn't exist")
 
@@ -1112,6 +1112,7 @@ class RobotGrasping(Env):
             )
 
         elif is_ik_pos_or_pry:
+            assert False
             assert isinstance(or_pry, list) and len(or_pry) == 3
             orn = p.getQuaternionFromEuler(or_pry)
             joint_damping_gain = [0.00001] if self._is_baxter() else [0.01]
@@ -1127,6 +1128,7 @@ class RobotGrasping(Env):
             assert len(joint_poses) == len(controllable_joint_ids)
 
         elif is_ik_null_space:
+            assert False
             if isinstance(or_pry, np.ndarray):
                 or_pry = or_pry.tolist()
 
@@ -1161,6 +1163,7 @@ class RobotGrasping(Env):
             assert len(joint_poses) == len(controllable_joint_ids)
 
         else:
+            assert False
             joint_damping_gain = [0.00001] if self._is_baxter() else [0.01]
             joint_poses = self.p.calculateInverseKinematics(
                 bodyUniqueId=self.robot_id,

@@ -36,7 +36,7 @@ def update_novelty_routine(is_novelty_required, inds2update, archive, evo_proces
 
     if is_novelty_required:
 
-        if algo_variant in consts.SINGLE_BD_NSLC_ALGO_VARIANTS:
+        if algo_variant in consts.NSLC_ALGO_VARIANTS:
             #  both novelty and local quality must be computed at the same time to avoid multiple KNN calls
             novelties_inds2update, local_qualities_inds2update = \
                 assess_novelties_and_local_quality_single_bd_vec(
@@ -282,39 +282,81 @@ def initialize_pop_and_archive(
     ref_pop_inds = pop.inds
 
     if id_counter is None:
-        id_counter = archive.get_last_id_counter() + 1
+        id_counter = archive.get_last_id_counter() + 1  # unique id is initialized with the last generated id
 
     return pop, archive, outcome_archive, progression_monitoring, stats_tracker, ref_pop_inds, id_counter
 
 
+def process_invalid_pop(pop, off, outcome_archive, algo_variant, toolbox, genotype_len, prob_cx, evaluate_fn, **kwargs):
+
+    invalid_inds = pop.get_invalid_inds() + off.get_invalid_inds() if algo_variant in consts.POP_BASED_ALGO_VARIANTS \
+        else off.get_invalid_inds()
+
+    inv_pop = Population(
+        inds=invalid_inds, toolbox=toolbox, genotype_len=genotype_len, id_counter=pop.id_counter, prob_cx=prob_cx
+    )
+    inv_pop.evaluate_and_update_inds(evaluate_fn=evaluate_fn)
+
+    added_inds, scs_inds_generated = outcome_archive.update(inv_pop)
+
+    return inv_pop, outcome_archive
+
+
+def process_fill_archive(archive, pop, off, **kwargs):
+    algo_variant = kwargs['algo_variant']
+    pop_size = kwargs['pop_size']
+
+    if algo_variant in consts.POP_BASED_ALGO_VARIANTS:
+        ref_pop_inds = pop.inds + off.inds
+    else:
+        ref_pop_inds = off.inds
+
+    novelty_updated_inds = update_novelty_routine(
+        inds2update=ref_pop_inds,
+        archive=archive,
+        **kwargs
+    )
+
+    novelties_off = novelty_updated_inds[pop_size:] if algo_variant in consts.WITH_NOVELTY_POP_BASED_ALGO_VARIANTS \
+        else novelty_updated_inds
+
+    archive.fill(
+        pop2add=off,
+        novelties=novelties_off
+    )
+
+    archive.manage_archive_size()
+
+
+def init_fixed_attr_dict(kwargs):
+    return {
+        'toolbox': kwargs['toolbox'],
+        'pop_size': kwargs['pop_size'],
+        'genotype_len': kwargs['genotype_len'],
+        'reinit_research_flg': kwargs['reinit_research_flg'],
+        'bound_genotype_thresh': kwargs['bound_genotype_thresh'],
+        'algo_variant': kwargs['algo_variant'],
+        'archive_kwargs': kwargs['archive_kwargs'],
+        'outcome_archive_kwargs': kwargs['outcome_archive_kwargs'],
+        'evaluate_fn': kwargs['evaluate_fn'],
+        'is_novelty_required': kwargs['is_novelty_required'],
+        'evo_process': kwargs['evo_process'],
+        'bd_indexes': kwargs['bd_indexes'],
+        'bd_filters': kwargs['bd_filters'],
+        'novelty_metric': kwargs['novelty_metric'],
+        'bd_bounds': kwargs['bd_bounds'],
+        'nb_offsprings_to_generate': kwargs['nb_offsprings_to_generate'],
+        'mut_flg': kwargs['mut_flg'],
+        'prob_cx': kwargs['prob_cx'],
+        'robot_name': kwargs['robot_name'],
+        'obj_vertices_poses': kwargs['obj_vertices_poses'],
+        'stabilized_obj_pose': kwargs['stabilized_obj_pose'],
+    }
+
+
 def run_qd_local(
-    toolbox,
-    evaluate_fn,
     stats_tracker,
-    novelty_metric,
-    genotype_len,
-    bd_bounds,
-    prob_cx,
-    algo_variant,
-    evo_process,
-    bound_genotype_thresh,
-    pop_size,
-    bd_indexes,
-    n_saved_ind_early_stop,
-    run_name,
-    n_budget_rollouts,
-    mut_flg,
-    run_details,  # preprocessed
-    nb_offsprings_to_generate,  # preprocessed
-    bd_filters,  # preprocessed
-    is_novelty_required,  # preprocessed
-    reinit_research_flg,
-    robot_name,
     timer,
-    obj_vertices_poses,
-    stabilized_obj_pose,
-    archive_kwargs,  # keyword args associted to archive type
-    outcome_archive_kwargs,  # keyword args associated to output archive
     **kwargs
 ):
 
@@ -325,32 +367,9 @@ def run_qd_local(
     n_gen_rolling_reinit_research = 0
 
     progression_monitoring = ProgressionMonitoring(
-        n_budget_rollouts=n_budget_rollouts, reinit_research_flg=reinit_research_flg
+        n_budget_rollouts=kwargs['n_budget_rollouts'], reinit_research_flg=kwargs['reinit_research_flg']
     )
-
-    fixed_attr_dict = {
-        'toolbox': toolbox,
-        'pop_size': pop_size,
-        'genotype_len': genotype_len,
-        'reinit_research_flg': reinit_research_flg,
-        'bound_genotype_thresh': bound_genotype_thresh,
-        'algo_variant': algo_variant,
-        'archive_kwargs': archive_kwargs,
-        'outcome_archive_kwargs': outcome_archive_kwargs,
-        'evaluate_fn': evaluate_fn,
-        'is_novelty_required': is_novelty_required,
-        'evo_process': evo_process,
-        'bd_indexes': bd_indexes,
-        'bd_filters': bd_filters,
-        'novelty_metric': novelty_metric,
-        'bd_bounds': bd_bounds,
-        'nb_offsprings_to_generate': nb_offsprings_to_generate,
-        'mut_flg': mut_flg,
-        'prob_cx': prob_cx,
-        'robot_name': robot_name,
-        'obj_vertices_poses': obj_vertices_poses,
-        'stabilized_obj_pose': stabilized_obj_pose,
-    }
+    fixed_attr_dict = init_fixed_attr_dict(kwargs)
 
     # --------------------------- EVOLUTIONARY PROCESS INITIALIZATION ------------------------------ #
 
@@ -359,7 +378,7 @@ def run_qd_local(
             progression_monitoring=progression_monitoring,
             stats_tracker=stats_tracker,
             **fixed_attr_dict
-    )
+        )
 
     # --------------------------------------- BEGIN EVOLUTION -------------------------------------- #
 
@@ -367,7 +386,7 @@ def run_qd_local(
     while do_iterate_gen:
         gen += 1
 
-        is_early_stop_flg = 0 <= n_saved_ind_early_stop <= len(outcome_archive.get_successful_inds())
+        is_early_stop_flg = 0 <= kwargs['n_saved_ind_early_stop'] <= len(outcome_archive.get_successful_inds())
         if is_early_stop_flg:
             stats_tracker.set_details(key='nb of generations', val=gen)
             break
@@ -378,7 +397,7 @@ def run_qd_local(
             research_must_be_reinit = True
             n_gen_rolling_reinit_research = 0
 
-        if reinit_research_flg and research_must_be_reinit:
+        if kwargs['reinit_research_flg'] and research_must_be_reinit:
             print('Reinitialization of the evo process.')
             pop, archive, outcome_archive, progression_monitoring, stats_tracker, ref_pop_inds, id_counter = \
                 initialize_pop_and_archive(
@@ -409,60 +428,33 @@ def run_qd_local(
             gen=gen,
             **fixed_attr_dict
         )
-        id_counter = off.id_counter
+        id_counter = off.id_counter  # unique id counter must be updated after having generated mutants
 
         # ------------------------------------------ EVALUATE -------------------------------------- #
 
-        #ref_pop_inds = get_ref_pop_inds()
-        #inv_pop = get_evaluate_and_update_
-        #ref_pop_inds, inv_pop = get_inv_pop_and_ref_pop_inds()
-        # même motif plus haut ?
-
-        if algo_variant in consts.POP_BASED_ALGO_VARIANTS:
-            ref_pop_inds = pop.inds + off.inds
-            invalid_inds = pop.get_invalid_inds() + off.get_invalid_inds()
-        else:
-            ref_pop_inds = off.inds
-            invalid_inds = off.get_invalid_inds()
-
-        inv_pop = Population(
-            inds=invalid_inds, toolbox=toolbox, genotype_len=genotype_len, id_counter=pop.id_counter, prob_cx=prob_cx
+        inv_pop, outcome_archive = process_invalid_pop(
+            pop=pop, off=off, outcome_archive=outcome_archive, **fixed_attr_dict
         )
-        inv_pop.evaluate_and_update_inds(evaluate_fn=evaluate_fn)
 
-        novelty_updated_inds = update_novelty_routine(
-            inds2update=ref_pop_inds,
-            archive=archive,
-            **fixed_attr_dict
-        )
-        added_inds, scs_inds_generated = outcome_archive.update(inv_pop)
+        # ---------------------------------- UPDATE ROLLING VARIABLES ------------------------------ #
 
         progression_monitoring.update(pop=inv_pop, outcome_archive=outcome_archive)
 
         if inv_pop.get_n_successful_inds() > 0:
             n_gen_rolling_reinit_research = 0
 
-        # ---------------------------------------- FILL ARCHIVE ------------------------------------ #
+        # --------------------------------------- UPDATE ARCHIVE ----------------------------------- #
 
-        novelties_off = novelty_updated_inds[pop_size:] if algo_variant in consts.POP_BASED_ALGO_VARIANTS \
-            else novelty_updated_inds
-
-        archive.fill(
-            pop2add=off,
-            novelties=novelties_off
-        )
+        process_fill_archive(archive=archive, pop=pop, off=off, **fixed_attr_dict)
 
         # -------------------------------- NEXT GENERATION PARENTS --------------------------------- #
 
-        replace_pop(
-            pop=pop,
-            ref_pop_inds=ref_pop_inds,
-            **fixed_attr_dict
-        )
-
-        # -------------------------------------- MANAGE ARCHIVE ------------------------------------ #
-
-        archive.manage_archive_size()
+        if kwargs['algo_variant'] in consts.POP_BASED_ALGO_VARIANTS:
+            replace_pop(
+                pop=pop,
+                ref_pop_inds=ref_pop_inds,
+                **fixed_attr_dict
+            )
 
         # ----------------------------------------- MEASURE ---------------------------------------- #
 
@@ -477,7 +469,7 @@ def run_qd_local(
             dump_archive_success_routine(
                 timer=timer,
                 timer_label=consts.NS_RUN_TIME_LABEL,
-                run_name=run_name,
+                run_name=kwargs['run_name'],
                 curr_neval=progression_monitoring.n_eval,
                 outcome_archive=outcome_archive,
             )
@@ -485,8 +477,8 @@ def run_qd_local(
         # --------------------------------- CHECK EVALUATION BUDGET -------------------------------- #
 
         curr_n_eval = progression_monitoring.n_eval
-        if curr_n_eval > n_budget_rollouts:
-            print(f'curr_n_eval={curr_n_eval} > n_budget_rollouts={n_budget_rollouts} | End of running.')
+        if curr_n_eval > kwargs['n_budget_rollouts']:
+            print(f'curr_n_eval={curr_n_eval} > n_budget_rollouts={kwargs["n_budget_rollouts"]} | End of running.')
             stats_tracker.n_generations = gen
             do_iterate_gen = False
             continue  # end of the evolutionary process
@@ -499,12 +491,12 @@ def run_qd_local(
     dump_archive_success_routine(
         timer=timer,
         timer_label=consts.NS_RUN_TIME_LABEL,
-        run_name=run_name,
+        run_name=kwargs['run_name'],
         curr_neval=progression_monitoring.n_eval,
         outcome_archive=outcome_archive,
         is_last_call=True,
     )
-    print(f'\nLatest success archive has been successfully dumped to {run_name}')
+    print(f'\nLatest success archive has been successfully dumped to: {kwargs["run_name"]}')
 
     timer.stop(label=consts.NS_RUN_TIME_LABEL)
 
@@ -523,8 +515,8 @@ def run_qd_local(
 
     export_running_data_routine(
         stats_tracker=stats_tracker,
-        run_name=run_name,
-        run_details=run_details,
+        run_name=kwargs['run_name'],
+        run_details=kwargs['run_details'],
         run_infos=run_infos
     )
 

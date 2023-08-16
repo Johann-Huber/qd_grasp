@@ -82,7 +82,6 @@ def select_off_inds(pop, nb_offsprings_to_generate, bd_filters, evo_process):
     return off_inds
 
 
-
 def select_offspring_routine(pop, ref_pop_inds, novelty_metric, nb_offsprings_to_generate, bd_filters, evo_process,
                              toolbox, algo_variant, archive, pop_size, id_counter, prob_cx, **kwargs):
 
@@ -96,7 +95,7 @@ def select_offspring_routine(pop, ref_pop_inds, novelty_metric, nb_offsprings_to
             evo_process=evo_process
         )
 
-    elif oss == SelectOffspringStrategy.RANDOM_FROM_ARCHIVE: # 'random_from_archive':
+    elif oss == SelectOffspringStrategy.RANDOM_FROM_ARCHIVE:
         off_inds = archive.random_sample(n_sample=pop_size)
 
     elif oss == SelectOffspringStrategy.NOVELTY_FROM_ARCHIVE:

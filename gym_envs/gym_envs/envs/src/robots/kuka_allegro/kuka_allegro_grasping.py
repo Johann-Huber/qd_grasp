@@ -1,61 +1,43 @@
-import pybullet_data
+
+import pdb
+
 import numpy as np
 import gym
 import os
 import random
 from pathlib import Path
-from gym_envs.envs.robot_grasping import RobotGrasping
-from gym_envs.envs.xacro import _process
+
+from gym_envs.envs.src.robot_grasping import RobotGrasping
+from gym_envs.envs.src.xacro import _process
 import gym_envs
-import gym_envs.envs.env_constants as env_consts
+import gym_envs.envs.src.env_constants as env_consts
 
-import time
-import pdb
 
-# Arm joints ids (7dof) :
-# ----------------------
-# 0, kuka_joint_a1
-# 1, kuka_joint_a2
-# 2, kuka_joint_a3
-# 3, kuka_joint_a4
-# 4, kuka_joint_a5
-# 5, kuka_joint_a6
-# 6, kuka_joint_a7
+"""
 
-# Allegro hand :
-# -------------
-# 9, joint_0
-# 10, joint_1
-# 11, joint_2
-# 12, joint_3
-# 14, joint_4
-# 15, joint_5
-# 16, joint_6
-# 17, joint_7
-# 19, joint_8
-# 20, joint_9
-# 21, joint_10
-# 22, joint_11
-# 24, joint_12
-# 25, joint_13
-# 26, joint_14
-# 27, joint_15
+    # ---------------------------------------------------------------------------------------- #
+    #                              KUKA IIWA ARM + ALLEGRO HAND
+    # ---------------------------------------------------------------------------------------- #
+    
+    # Notes :
 
-# Note : baselink (29), kuka_joint_a7-end_effector (7), kuka_to_allegro_joint (8),
-# and tips (13, 18, 23, 28) are discarded,
+    - baselink (29), kuka_joint_a7-end_effector (7), kuka_to_allegro_joint (8), and tips (13, 18, 23, 28) are discarded
+    
+    - joint_ids : concatenation of arm_joint + hand joints
+    - contact_ids : hand ids (9 to 27)
+    - n_control_gripper : 16
+    - end_effector_id : 7 (literally the end eff id)
+    
+    - joint_0, joint_4, joint_8 : palm-proximal yaw. Considered fixed here.
+    - joint_12 : thumb palm-proximal yaw.
+    - joint_1, joint_5, joint_9, joint_13 : palm-proximal pitch.
+    - joint_2, joint_6, joint_10, joint_14 : proximal-middle pitch.
+    - joint_3, joint_7, joint_11, joint_15 : middle-distal pitch.
+    - get_fingers : ndarray associated to each hand joints: 
+        [0, -x, -x, -x, 0, -x, -x, -x, 0, -x, -x, -x, -x, -x, -x, -x]
 
-# joint_ids : concatenation of arm_joint + hand joints
-# contact_ids : hand ids (9 to 27)
-# n_control_gripper : 16
-# end_effector_id : 7 (literally the end eff id)
+"""
 
-# joint_0, joint_4, joint_8 : palm-proximal yaw. Considered fixed here.
-# joint_12 : thumb palm-proximal yaw.
-# joint_1, joint_5, joint_9, joint_13 : palm-proximal pitch.
-# joint_2, joint_6, joint_10, joint_14 : proximal-middle pitch.
-# joint_3, joint_7, joint_11, joint_15 : middle-distal pitch.
-# get_fingers : ndarray associated to each hand joints
-#   [0, -x, -x, -x, 0, -x, -x, -x, 0, -x, -x, -x, -x, -x, -x, -x]
 
 KUKA_ARM_JOINT_ID_STATUS = {
     0:  {'name': 'J0',          'status': 'CONTROLLED',         'is_controllable': True},
@@ -114,24 +96,24 @@ DISCARDED_J_IDS_CLOSING_PRIMITIVES = {
 }
 
 
-class Kuka_iiwa_allegro(RobotGrasping):
+class KukaAllegroGrasping(RobotGrasping):
 
-    def __init__(self,
-        object_position=[0, 0.1, 0],
-        #mode='joint positions',
-        left=False, # the default is the right hand
-        **kwargs
-	):
+    def __init__(
+            self,
+            object_position=[0, 0.1, 0],
+            left=False,  # the default is the right hand
+            **kwargs
+            ):
 
         cwd = Path(gym_envs.__file__).resolve().parent/"envs"
-        urdf = Path(cwd/f"robots/generated/kuka_iiwa_allegro_{'left' if left else 'right'}.urdf")
+        urdf = Path(cwd/f"3d_models/robots/generated/kuka_iiwa_allegro_{'left' if left else 'right'}.urdf")
         urdf.parent.mkdir(exist_ok=True, parents=True)
-        if not urdf.is_file(): # create the file if doesn't exist
+        if not urdf.is_file():  # create the file if doesn't exist
             _process(
-                cwd/"robots/lbr_iiwa/urdf/lbr_iiwa_14_r820_allegro.xacro",
+                cwd/"3d_models/robots/lbr_iiwa/urdf/lbr_iiwa_14_r820_allegro.xacro",
                 dict(output=urdf, just_deps=False, xacro_ns=True, verbosity=1,
                      mappings={'arg_left':'true' if left else 'false'})
-            ) # convert xacro to urdf
+            )  # convert xacro to urdf
 
         def load_kuka():
             kuka_allegro_id = self.p.loadURDF(
@@ -191,7 +173,7 @@ class Kuka_iiwa_allegro(RobotGrasping):
         if not is_closing:
             return self.get_fingers(x)
         else:
-            discarded_j_ids = DISCARDED_J_IDS_CLOSING_PRIMITIVES[primitive_val] # add primitive
+            discarded_j_ids = DISCARDED_J_IDS_CLOSING_PRIMITIVES[primitive_val]  # add primitive
 
             # Format when giving only controllable joint to robot_grasping:
             return np.array(
@@ -272,9 +254,12 @@ class Kuka_iiwa_allegro(RobotGrasping):
 
         j_id_thumb_opposition = 24
         HAND_PRESET_VALUES = {
-            j_id_thumb_opposition: 1.396, # opposed thumb
+            j_id_thumb_opposition: 1.396,  # opposed thumb
         }
 
         for j_id in HAND_PRESET_VALUES:
             target_val = HAND_PRESET_VALUES[j_id]
             self.p.resetJointState(self.robot_id, j_id, targetValue=target_val)
+
+
+

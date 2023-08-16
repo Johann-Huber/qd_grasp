@@ -5,17 +5,20 @@ import pathlib
 from enum import Enum
 import os
 
+
+
 # Variant names
-STANDARD_VARIANTS = ["nsmbs", "random", "fit", "ns"]
+POP_BASED_BASELINES_ALGO_VARIANTS = ['random', 'fit', 'ns']
+NSMBS_ALGO_VARIANTS = ['nsmbs']
+CMA_MAE_ALGO_VARIANTS = ['cma_mae']
+CMA_ME_ALGO_VARIANTS = ['cma_me']
+CMA_ES_ALGO_VARIANTS = ['cma_es']
+
 
 QD_VARIANTS = ['nslc', 'me_scs', 'me_fit', 'me_rand', 'me_nov', 'me_nov_scs', 'me_nov_fit']
 
 PYRIBS_QD_VARIANTS = ['cma_mae', 'cma_es', 'cma_me']
 SERENE_QD_VARIANTS = ['serene']
-
-CMA_MAE_ALGO_VARIANTS = ['cma_mae']
-CMA_ME_ALGO_VARIANTS = ['cma_me']
-CMA_ES_ALGO_VARIANTS = ['cma_es']
 
 
 ELITE_STRUCTURED_ARCHIVE_ALGO_VARIANTS = ['me_scs', 'me_rand', 'me_fit']
@@ -23,7 +26,9 @@ ELITE_NOVELTY_STRUCTURED_ARCHIVE_ALGO_VARIANTS = ['me_nov', 'me_nov_scs', 'me_no
 NOVELTY_ARCHIVE_ALGO_VARIANTS = ['ns', 'nsmbs']
 ARCHIVE_LESS_ALGO_VARIANTS = ['random', 'fit']
 
-POP_BASED_RANDOM_SELECTION_ALGO_VARIANTS = ["random", "fit", "ns", "nsmbs", 'serene']
+POP_BASED_RANDOM_SELECTION_ALGO_VARIANTS = POP_BASED_BASELINES_ALGO_VARIANTS + NSMBS_ALGO_VARIANTS + SERENE_QD_VARIANTS
+#pdb.set_trace()
+
 ELITE_STRUCTURED_ARCHIVE_SUCCESS_BASED_SELECTION_ALGO_VARIANTS = ['me_scs']
 ARCHIVE_BASED_RANDOM_SELECTION_ALGO_VARIANTS = ['me_rand']
 ARCHIVE_BASED_FITNESS_SELECTION_ALGO_VARIANTS = ['me_fit']
@@ -45,17 +50,19 @@ SelectOffspringStrategy = Enum(
      'NSLC']
 )
 
-SUPPORTED_VARIANTS_NAMES = STANDARD_VARIANTS + QD_VARIANTS + PYRIBS_QD_VARIANTS + SERENE_QD_VARIANTS
+SUPPORTED_VARIANTS_NAMES = POP_BASED_BASELINES_ALGO_VARIANTS + NSMBS_ALGO_VARIANTS + QD_VARIANTS + PYRIBS_QD_VARIANTS + SERENE_QD_VARIANTS
 
 # Conditions on variants
 VARIANTS_NO_EVO_PROCESS_REINIT = []
 
-SINGLE_BD_NSLC_ALGO_VARIANTS = ['nslc']
-NSLC_ALGO_VARIANTS = SINGLE_BD_NSLC_ALGO_VARIANTS
+NSLC_ALGO_VARIANTS = ['nslc']
 
 MAP_ELITES_ALGO_VARIANTS = ['me_scs', 'me_rand', 'me_nov', 'me_nov_scs', 'me_nov_fit', 'me_fit']
 
-POP_BASED_ALGO_VARIANTS = NSLC_ALGO_VARIANTS + SERENE_QD_VARIANTS
+POP_BASED_ALGO_VARIANTS = POP_BASED_BASELINES_ALGO_VARIANTS + NSMBS_ALGO_VARIANTS + NSLC_ALGO_VARIANTS + SERENE_QD_VARIANTS
+
+WITH_NOVELTY_POP_BASED_ALGO_VARIANTS = ['ns', 'nsmbs', 'serene']
+
 
 #----------------------------------------------------------------------------------------------------------------------#
 # VARIANTS HYPERPARAMETERS
@@ -350,12 +357,12 @@ K_NN_LOCAL_QUALITY = 50
 
 
 CARTESIAN_SCENE_POSE_BOUNDARIES = {
-    'kuka_iiwa_allegro-v0': {
+    'kuka_allegro_grasping-v0': {
         'min_x_val': -0.4, 'max_x_val': 0.4,
         'min_y_val': -0.1, 'max_y_val': 0.3,
         'min_z_val': -0.3, 'max_z_val': 0.1,
     },
-    'kuka_grasping-v0': {
+    'kuka_wsg50_grasping-v0': {
         'min_x_val': -0.5, 'max_x_val': 0.5,
         'min_y_val': -0.2, 'max_y_val': 0.5,
         'min_z_val': -0.2, 'max_z_val': 0.3,

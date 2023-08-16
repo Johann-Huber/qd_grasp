@@ -1,22 +1,18 @@
 
+import pdb
 
 import argparse
-import pdb
 from functools import partial
 from pathlib import Path
-
 import gym
-#from deap import base, creator
-import evolutionary_process
-
-from utils.common_tools import arg_clean_str, wrapped_partial
-import utils.constants as consts
-import utils.env_constants as env_consts
-import gym_envs.envs.env_constants as gym_env_consts
-
 
 from algorithms.controllers.instantiable_controllers import StandardWayPointsJointController, \
     SynergiesWayPointsJointController, StandardWayPointsIKController, SynergiesWayPointsIKController
+from utils.common_tools import arg_clean_str
+
+import utils.constants as consts
+import gym_envs.envs.src.env_constants as env_consts
+
 
 def get_controller_class(robot_kwargs):
     controller_type = robot_kwargs['controller_type']
@@ -85,7 +81,6 @@ def get_controller_info(robot_kwargs, env_kwargs, algo_variant):
 def get_eval_kwargs(parsed_args, robot_kwargs, evo_process, bd_bounds, bd_flg, env_kwargs, prehension_criteria,
                     algo_variant):
 
-
     add_iter = int(1*240/robot_kwargs['nb_steps_to_rollout'])
     nb_iter = robot_kwargs['nb_iter']
     bd_bounds = bd_bounds
@@ -143,7 +138,7 @@ def get_robot_kwargs(robot_name, object=None):
     }
 
     if env_name == 'baxter_grasping-v0':
-        grip_slot = gym_env_consts.BX_GRIP_SLOT_PER_OBJECTS[object]
+        grip_slot = env_consts.BX_GRIP_SLOT_PER_OBJECTS[object]
         robot_kwargs['grip_slot'] = grip_slot
 
     return robot_kwargs
@@ -153,7 +148,7 @@ def get_env_kwargs(robot_name, object_name, robot_kwargs):
 
     env_id = robot_kwargs['env_name']
     steps_to_roll = robot_kwargs['nb_steps_to_rollout']
-    fixed_arm = True if 'baxter' in robot_name else False  # best performance
+    fixed_arm = False  # todo depreciated
     controller_type = robot_kwargs['controller_type']
 
     env_kwargs = {
@@ -204,7 +199,7 @@ def parse_input_args():
     parser.add_argument("-r", "--robot",
                         type=arg_clean_str,
                         default="baxter",
-                        choices=["kuka_ik", "kuka_iiwa_allegro_ik"],
+                        choices=env_consts.INPUT_ARG_ROBOT2ROBOT_TYPE_NAME.keys(),
                         help="The robot environment")
     parser.add_argument("-o", "--object",
                         type=str,
@@ -340,7 +335,7 @@ def initialize_cpu_multicore_data():
     POP_SIZE = args.population
     OBJECT = args.object
     PROB_CX = args.prob_cx
-    ROBOT = args.robot
+    ROBOT = env_consts.INPUT_ARG_ROBOT2ROBOT_TYPE_NAME[args.robot]
     ALGO_VARIANT = args.algorithm
     EVO_PROCESS = consts.ALGO_EVO_PROCESS[ALGO_VARIANT]
     BD_FLG = consts.BD_FLG

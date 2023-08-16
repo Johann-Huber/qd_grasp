@@ -246,13 +246,13 @@ class InverseKinematicsController(ControllerSpace):
         return waypoints_6dof, i_step2targeted_wp_list
 
     def _debug_fixed_way_points(self):
-        fixed_x = -0.3  #0.0  #-0.3 : baxter  # 0.0 : kuka
-        fixed_y = 0.05  #-0.25 : baxter # 0.25 : kuka
-        approach_keypoint_pose_xyz = [-0.25, 0., 0.15] #[-0.2, 0.15, 0.15]
+        fixed_x = -0.3
+        fixed_y = 0.05
+        approach_keypoint_pose_xyz = [-0.25, 0., 0.15]
         approach_keypoint_or_euler = [0, np.pi/2, 0]
         prehension_keypoint_pose_xyz = [-0.2, -0.05, 0.05]
         prehension_keypoint_or_euler = [0, 2*np.pi/2, 0]
-        verification_keypoint_pose_xyz = [0., 0, 0.05] #[0.3, fixed_y, 0.25]
+        verification_keypoint_pose_xyz = [0., 0, 0.05]
         verification_keypoint_or_euler = [0, 2*np.pi/2, 0]
 
         return approach_keypoint_pose_xyz, approach_keypoint_or_euler, prehension_keypoint_pose_xyz, \

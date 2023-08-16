@@ -1,3 +1,4 @@
+import pdb
 
 import numpy as np
 
@@ -25,6 +26,7 @@ class NoveltyArchive(UnstructuredArchive):
         # fill archive with the most novel individuals
 
         assert len(pop) == len(novelties)
+
         novel_n = np.array([nov[0] if nov[0] is not None else -consts.INF_FLOAT_CONST for nov in novelties])
         max_novelties_idx = np.argsort(-novel_n)[:self._nb2add_per_update]
 

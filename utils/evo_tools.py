@@ -6,7 +6,7 @@ import random
 from sklearn.neighbors import NearestNeighbors as Nearest
 from pyquaternion import Quaternion
 
-import gym_envs.envs.env_constants as env_consts
+import gym_envs.envs.src.env_constants as env_consts
 import utils.constants as consts
 
 
@@ -40,8 +40,8 @@ def choose_bd_strategy(n_elig_per_bd):
         int: index of the chosen bd
     """
 
-    if sum(n_elig_per_bd) == 0:
-        return None
+    #if sum(n_elig_per_bd) == 0:
+    #    return None
 
     # most basic strategy: choose a random behavior descriptor, but make sure inventory(bd_index) > 0
     is_non_empty_bd_found = False
@@ -103,7 +103,11 @@ def get_candidate_ind_ids_and_novelties(pop, tourn_ind_ids, bd2compare_id):
     for ind_id in tourn_ind_ids:
         ind = pop[ind_id]
         nov_list = list(ind.novelty.values)
-        nov_to_compare = nov_list[bd2compare_id]
+        try:
+            nov_to_compare = nov_list[bd2compare_id]
+        except:
+            pdb.set_trace()
+
         if nov_to_compare is not None:
             candidate_ind_ids.append(ind_id)
             candidate_ind_novelties.append(nov_to_compare)
@@ -122,12 +126,14 @@ def select_n_multi_bd_tournsize(pop, nb_inds2generate, tournsize_ratio, bd_filte
 
     for i in range(nb_inds2generate):
         # after each iteration, an individual must have been added to selected to get n inds at the end
-
         tourn_ind_ids = prepare_n_multi_bd_tournament(
             pop_size=pop_size, tournsize_ratio=tournsize_ratio, unwanted_list=unwanted_list, putback=putback
         )
 
         n_elig_per_bd = compute_n_elig_per_bd(pop=pop, tourn_ind_ids=tourn_ind_ids, nb_of_bd=nb_of_bd)
+        if sum(n_elig_per_bd) == 0:
+            continue  # no valid bd in the tournament. Skip it.
+
         bd2compare_id = choose_bd_strategy(n_elig_per_bd=n_elig_per_bd)
 
         candidate_ind_ids, candidate_ind_novelties = get_candidate_ind_ids_and_novelties(
@@ -143,6 +149,7 @@ def select_n_multi_bd_tournsize(pop, nb_inds2generate, tournsize_ratio, bd_filte
             unwanted_list.append(ind_idx)
 
     if len(selected) < nb_inds2generate:
+        #  not enough select inds: the pop is filled with randomly sampled solutions
         n_missing_inds = nb_inds2generate - len(selected)
         tourn_ind_ids = [i for i in list(range(pop_size)) if i not in unwanted_list]
         idx_inds2fill = random.sample(tourn_ind_ids, n_missing_inds)
@@ -211,8 +218,7 @@ def fill_archive(archive, off, novelties):
 
 def replace_pop(pop, ref_pop_inds, evo_process, bd_filters, algo_variant, **kwargs):
 
-    if algo_variant not in consts.POP_BASED_RANDOM_SELECTION_ALGO_VARIANTS:
-        return
+    assert algo_variant not in consts.POP_BASED_ALGO_VARIANTS
 
     # Selection & replacement
     if evo_process == 'ns_rand_multi_bd':

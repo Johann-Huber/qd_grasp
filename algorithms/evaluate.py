@@ -7,7 +7,7 @@ import os
 from utils.evo_tools import diversity_measure
 from utils.evo_tools import diversity_measure, get_normalized_multi_fitness
 import random
-import gym_envs.envs.env_constants as env_consts
+import gym_envs.envs.src.env_constants as env_consts
 import pdb
 import time
 import algorithms.controllers.controller_params as ctrl_params
@@ -181,7 +181,7 @@ def evaluate_grasp_ind(individual, env, robot, eval_kwargs, n_reset_safecheck):
     obj_not_touching_table = len(grip_info['contact object table']) > 0
     is_there_grasp = reward and grasped_while_closing and obj_not_touching_table
 
-    redeploiement_robot_sanity_check = robot in ['kuka_iiwa_allegro_ik', 'kuka_ik']
+    redeploiement_robot_sanity_check = robot in env_consts.ROBOT_TYPE_SKIP_REDEPLOIEMENT_SAFECHECK
     assert redeploiement_robot_sanity_check
 
     if is_there_grasp:
@@ -442,7 +442,7 @@ def do_safechecks_traj_success(robot, env, add_iter, controller, nb_iter, n_rese
     if not is_stable_grasp:
         return False
 
-    skip_redeploiement_safecheck = robot in ['kuka_iiwa_allegro_ik']
+    skip_redeploiement_safecheck = robot in env_consts.ROBOT_TYPE_SKIP_REDEPLOIEMENT_SAFECHECK #[env_consts.SimulatedRobot.KUKA_ALLEGRO, env_consts.SimulatedRobot.KUKA_ALLEGRO]
     if skip_redeploiement_safecheck:
         return True
 

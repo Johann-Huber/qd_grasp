@@ -303,7 +303,6 @@ def assess_novelties(pop, archive, evo_process, bd_indexes, bd_filters, novelty_
             evo_process=evo_process,
             b_descriptors=b_descriptors
         )
-
     return novelties
 
 
@@ -363,7 +362,7 @@ def update_novelty_routine(is_novelty_required, inds2update, archive, evo_proces
 
     if is_novelty_required:
 
-        if algo_variant in consts.SINGLE_BD_NSLC_ALGO_VARIANTS:
+        if algo_variant in consts.NSLC_ALGO_VARIANTS:
             #  both novelty and local quality must be computed at the same time to avoid multiple KNN calls
             novelties_inds2update, local_qualities_inds2update = \
                 assess_novelties_and_local_quality_single_bd_vec(

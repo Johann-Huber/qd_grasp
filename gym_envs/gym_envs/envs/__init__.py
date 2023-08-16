@@ -1,4 +1,5 @@
 
-from gym_envs.envs.kuka_grasping import KukaGrasping
-from gym_envs.envs.kuka_iiwa_allegro import Kuka_iiwa_allegro
+from gym_envs.envs.src.robots.kuka_wsg50.kuka_wsg50_grasping import KukaWsg50Grasping
+from gym_envs.envs.src.robots.kuka_allegro.kuka_allegro_grasping import KukaAllegroGrasping
+
 

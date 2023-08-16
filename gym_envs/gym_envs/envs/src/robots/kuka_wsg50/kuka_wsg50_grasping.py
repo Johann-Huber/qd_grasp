@@ -6,10 +6,10 @@ import gym
 import os
 import random
 from pathlib import Path
-from gym_envs.envs.robot_grasping import RobotGrasping
+from gym_envs.envs.src.robot_grasping import RobotGrasping
 import gym_envs
-from gym_envs.envs.xacro import _process
-import gym_envs.envs.env_constants as env_consts
+from gym_envs.envs.src.xacro import _process
+import gym_envs.envs.src.env_constants as env_consts
 import time
 
 '''
@@ -52,13 +52,13 @@ KUKA_CLAW_GRIP_JOINT_ID_STATUS = {
 }
 
 
-class KukaGrasping(RobotGrasping):
+class KukaWsg50Grasping(RobotGrasping):
 
     def __init__(self, object_position=env_consts.KUKA_DEFAULT_INIT_OBJECT_POSITION, **kwargs):
         cwd = Path(gym_envs.__file__).resolve().parent / "envs"
 
         def load_kuka():
-            robot_id = self.p.loadSDF(str(cwd/"robots/kuka_iiwa/kuka_gripper_end_effector.sdf"))[0]
+            robot_id = self.p.loadSDF(str(cwd/"3d_models/robots/kuka_iiwa/kuka_gripper_end_effector.sdf"))[0]
             self.p.resetBasePositionAndOrientation(robot_id, [-0.1, -0.5, -0.5], [0., 0., 0., 1.])
             return robot_id
 
