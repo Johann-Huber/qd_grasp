@@ -43,7 +43,7 @@ class KukaWsg50Grasping(RobotGrasping):
             'center_workspace': kw_consts.KUKA_CENTER_WORKSPACE,
             'ws_radius': ku_consts.KUKA_WS_RADIUS,
             'disabled_collision_pair': kw_consts.KUKA_DISABLED_COLLISION_PAIRS,
-            'change_dynamics': kw_consts.KUKA_WSF50_CHANGE_DYNAMICS,
+            'change_dynamics': kw_consts.KUKA_WSG50_CHANGE_DYNAMICS,
             'is_there_primitive_gene': False,
         }
 

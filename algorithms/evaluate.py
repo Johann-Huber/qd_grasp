@@ -4,8 +4,8 @@ import numpy as np
 import utils.constants as consts
 import utils.common_tools as uct
 import os
-from utils.evo_tools import diversity_measure
-from utils.evo_tools import diversity_measure, get_normalized_multi_fitness
+
+from utils.evo_tools import get_normalized_multi_fitness
 import random
 import gym_envs.envs.src.env_constants as env_consts
 import pdb
@@ -20,14 +20,14 @@ def evaluate_grasp_ind(individual, env, robot, eval_kwargs, n_reset_safecheck):
     add_iter = eval_kwargs['add_iter']
     nb_iter = eval_kwargs['nb_iter']
     bd_bounds = eval_kwargs['bd_bounds']
-    nb_steps_to_rollout = eval_kwargs['nb_steps_to_rollout']
+    #nb_steps_to_rollout = eval_kwargs['nb_steps_to_rollout']
     no_contact_table = eval_kwargs['no_contact_table']
     controller_class = eval_kwargs['controller_class']
     controller_info = eval_kwargs['controller_info']
     n_it_closing_grip = eval_kwargs['n_it_closing_grip']
     prehension_criteria = eval_kwargs['prehension_criteria']
     algo_variant = eval_kwargs['algo_variant']
-
+    pdb.set_trace()
     env.reset(load='state' if consts.RESET_MODE else 'all')
 
     controller = init_controller(
@@ -48,18 +48,16 @@ def evaluate_grasp_ind(individual, env, robot, eval_kwargs, n_reset_safecheck):
     bd_len = len(bd_bounds)
     init_obj_pos = env.info['object position']
     n_steps_before_grasp = consts.INF_FLOAT_CONST
-    worst_energy_fit, best_energy_fit = env_consts.ENERGY_FIT_NORM_BOUNDS_PER_ROB[robot]['min'], \
-                                        env_consts.ENERGY_FIT_NORM_BOUNDS_PER_ROB[robot]['max']
+
     grip_info = {"contact object table": [], "diff(t_close, t_touch)": consts.INF_FLOAT_CONST}
     info_out = {'is_valid': None, 'energy': 0, 'n_steps_before_grasp': n_steps_before_grasp, 'reward': 0,
                 'normalized_multi_fit': 0., 'touch_var': None,
-                'is_obj_touched': False, 'diversity_descriptor': None,
+                'is_obj_touched': False,
                 }
     all_touch_on_obj, all_touch_on_robot = [], []
     is_discontinuous_touch, n_steps_continuous_touch, n_steps_discontinuous_touch = False, 0, 0
     max_observed_n_touch = 0
 
-    obj_pos_init, obj_orient_init = env.p.getBasePositionAndOrientation(env.obj_id)
     all_pos_obj_before_grasp, all_orient_obj_before_grasp = [], []
 
     controller.update_grip_time(grip_time=consts.INF_FLOAT_CONST)  # disable grasping before touching
@@ -76,11 +74,8 @@ def evaluate_grasp_ind(individual, env, robot, eval_kwargs, n_reset_safecheck):
 
         nrmlized_pos_arm = env.get_joint_state(normalized=True)
 
-        curr_j_pose = tuple(env.get_state()['joint_positions'])
-        verbose_str = f'current = {curr_j_pose}\n' + '-' * 50
-        verbose_str = f'current[4] = {curr_j_pose[4]}\n' + '-' * 50
-
         if done:
+            pdb.set_trace()
             break
 
         if i_step >= controller.grip_time and not is_already_grasped:
@@ -95,8 +90,7 @@ def evaluate_grasp_ind(individual, env, robot, eval_kwargs, n_reset_safecheck):
 
         if info['touch'] and not is_already_touched:
             # first touch of object
-            or_touch_time = diversity_measure(info)
-
+            or_touch_time = info['end effector xyzw']
             pos_touch_time = info['end effector position']
 
             is_already_touched = True
@@ -116,28 +110,13 @@ def evaluate_grasp_ind(individual, env, robot, eval_kwargs, n_reset_safecheck):
             half_state_measured = True
 
         if consts.AUTO_COLLIDE and info['autocollision']:
-
-            behavior = build_invalid_behavior_vector(evo_process=evo_process, bd_len=bd_len)
-            fitness = -consts.INF_FLOAT_CONST  # -float('inf')
-            touch_var = -consts.INF_FLOAT_CONST if 'touch_var' in prehension_criteria else None
-            worst_energy = worst_energy_fit
-            worst_normalized_multi_fit = 0.
-            info_out = {'is_valid': False, 'is_success': False, 'auto_collided': True,
-                        'energy': worst_energy,
-                        'is_obj_touched': is_already_touched,
-                        'normalized_multi_fit': worst_normalized_multi_fit, 'touch_var': touch_var,
-
-                        }
-            print('AUTOCOLLIDE !' + 20 * '=')
-
-            if evo_process in consts.EVO_PROCESS_WITH_LOCAL_COMPETITION:
-                dummy_fitness = (fitness, fitness)
-            elif algo_variant in consts.ARCHIVE_BASED_NOVELTY_FITNESS_SELECTION_ALGO_VARIANTS:
-                dummy_fitness = (fitness, fitness)
-            else:
-                dummy_fitness = (fitness,)
-
-            return (behavior, dummy_fitness, info_out)
+            return get_autocollide_outputs(
+                evo_process=evo_process,
+                bd_len=bd_len,
+                algo_variant=algo_variant,
+                robot=robot,
+                is_already_touched=is_already_touched
+            )
 
         if is_already_touched and not is_discontinuous_touch:
             touch_points_on_obj = info['touch_points_obj']
@@ -170,7 +149,7 @@ def evaluate_grasp_ind(individual, env, robot, eval_kwargs, n_reset_safecheck):
             n_steps_before_grasp = i_step
 
         if env.display:
-            time.sleep(0.01)
+            time.sleep(consts.TIME_SLEEP_SMOOTH_DISPLAY_IN_SEC)
 
         nrmlized_pos_arm_prev = nrmlized_pos_arm
 
@@ -181,15 +160,11 @@ def evaluate_grasp_ind(individual, env, robot, eval_kwargs, n_reset_safecheck):
     obj_not_touching_table = len(grip_info['contact object table']) > 0
     is_there_grasp = reward and grasped_while_closing and obj_not_touching_table
 
-    redeploiement_robot_sanity_check = robot in env_consts.ROBOT_TYPE_SKIP_REDEPLOIEMENT_SAFECHECK
-    assert redeploiement_robot_sanity_check
-
     if is_there_grasp:
         is_there_grasp = do_safechecks_traj_success(
             env=env, add_iter=add_iter, controller=controller, nb_iter=nb_iter, n_reset_safecheck=n_reset_safecheck,
             robot=robot
         )
-
 
     info_out['is_success'] = False
     if is_there_grasp:
@@ -197,9 +172,7 @@ def evaluate_grasp_ind(individual, env, robot, eval_kwargs, n_reset_safecheck):
             is_success = False
             info_out['is_success'] = False
             pos_touch_time = None
-            info_out['diversity_descriptor'] = None
         else:
-            info_out['diversity_descriptor'] = or_touch_time
             if no_contact_table and robot_has_touched_table:
                 is_success = False
                 or_touch_time = None
@@ -214,9 +187,7 @@ def evaluate_grasp_ind(individual, env, robot, eval_kwargs, n_reset_safecheck):
     info_out['is_valid'] = True
     info_out['energy'] = (-1) * info_out['energy']  # minimize energy => maximise energy_fit = (-1) * energy
 
-    if is_already_touched:
-        grip_or_half = np.array([grip_or_half[3], *grip_or_half[:3]])  # wxyz
-    else:
+    if not is_already_touched:
         grip_or_half = None
 
     last_obj_pos = info['object position']
@@ -289,6 +260,41 @@ def exception_handler_evaluate_grasp_ind(individual, eval_kwargs):
         'touch_var': -consts.INF_FLOAT_CONST if 'touch_var' in prehension_criteria else None,
     }
     return dummy_behavior_failure, dummy_fitness_failure, dummy_info_out_failure
+
+
+def get_autocollide_outputs(evo_process, bd_len, algo_variant, robot, is_already_touched, verbose=True):
+
+    if verbose:
+        print('AUTOCOLLIDE !' + 20 * '=')
+
+    worst_energy = env_consts.ENERGY_FIT_NORM_BOUNDS_PER_ROB[robot]['min']
+    worst_fitness = -consts.INF_FLOAT_CONST
+    worst_touch_var = -consts.INF_FLOAT_CONST
+    worst_normalized_multi_fit = 0.
+
+    # Build behavior descriptor
+    behavior = build_invalid_behavior_vector(evo_process=evo_process, bd_len=bd_len)
+
+    # Build fitness
+    if evo_process in consts.EVO_PROCESS_WITH_LOCAL_COMPETITION:
+        dummy_fitness = (worst_fitness, worst_fitness)
+    elif algo_variant in consts.ARCHIVE_BASED_NOVELTY_FITNESS_SELECTION_ALGO_VARIANTS:
+        dummy_fitness = (worst_fitness, worst_fitness)
+    else:
+        dummy_fitness = (worst_fitness,)
+
+    # Build info_out
+    info_out = {
+        'is_valid': False,
+        'is_success': False,
+        'auto_collided': True,
+        'energy': worst_energy,
+        'is_obj_touched': is_already_touched,
+        'normalized_multi_fit': worst_normalized_multi_fit,
+        'touch_var': worst_touch_var,
+    }
+
+    return behavior, dummy_fitness, info_out
 
 
 def around_inds(inds):
@@ -442,7 +448,7 @@ def do_safechecks_traj_success(robot, env, add_iter, controller, nb_iter, n_rese
     if not is_stable_grasp:
         return False
 
-    skip_redeploiement_safecheck = robot in env_consts.ROBOT_TYPE_SKIP_REDEPLOIEMENT_SAFECHECK #[env_consts.SimulatedRobot.KUKA_ALLEGRO, env_consts.SimulatedRobot.KUKA_ALLEGRO]
+    skip_redeploiement_safecheck = robot in env_consts.ROBOT_TYPE_SKIP_REDEPLOIEMENT_SAFECHECK
     if skip_redeploiement_safecheck:
         return True
 

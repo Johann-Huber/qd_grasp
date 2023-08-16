@@ -10,11 +10,6 @@ import gym_envs.envs.src.env_constants as env_consts
 import utils.constants as consts
 
 
-def diversity_measure(info):
-    grip_or = info['end effector xyzw']
-    measure = Quaternion(grip_or[3], grip_or[0], grip_or[1], grip_or[2])
-    return measure
-
 
 def fit_bd_neareast_neighbours(bd_list, nov_metric):
     """Fit kd tree (kNN algo using nov_metric metric) for the given lise of behavior descriptors. Returns the fitted

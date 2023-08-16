@@ -100,7 +100,6 @@ class OutcomeArchive(EliteStructuredArchive):
             os.mkdir(export_archive_path)
 
         bds = [ind.behavior_descriptor.values for ind in inds2export]
-        diversity_descriptors = [ind.info.values['diversity_descriptor'] for ind in inds2export]
 
         n_gen_since_scs_parent_vals = [ind.gen_info.values['n_gen_since_scs_parent'] for ind in inds2export]
         normalized_multi_fit_vals = [ind.info.values['normalized_multi_fit'] for ind in inds2export]
@@ -109,7 +108,6 @@ class OutcomeArchive(EliteStructuredArchive):
             "inds": np.array(inds2export),
             "behavior_descriptors": bds,
             "fitnesses": normalized_multi_fit_vals,
-            "diversity_descriptors": diversity_descriptors,
             "nevals": curr_neval,
             "elapsed_time": elapsed_time,
             "n_gen_since_scs_parent_vals": n_gen_since_scs_parent_vals

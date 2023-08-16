@@ -958,15 +958,7 @@ class RobotGrasping(Env):
         return observation
 
     def _reset_robot(self):
-        pass  # Supposed to be overloaded in the inherited class
-
-    '''
-    def get_fingers(self, x):
-        """Return the value of the fingers to control all finger with -1≤x≤1.
-        Gripper opened: x=1, gripper closed: x=-1"""
-        # Supposed to be overloaded in the inherited class
-        raise NotImplementedError(f'get_fingers() is not implemented in {self.__name__}.')
-    '''
+        raise RuntimeError('Must be overloaded in subclasses.')
 
     def render(self, mode='human'):
         if mode in {'rgb_array', 'rgba_array'}: # slow !
@@ -1108,6 +1100,7 @@ class RobotGrasping(Env):
         is_ik_null_space = or_pry is not None and null_space_flg
 
         if is_ik_accurate:
+            assert False
             joint_poses = self.accurateIK(
                 bodyId=self.robot_id, end_effector_id=self.end_effector_id, targetPosition=pos,
                 targetOrientation=[0., 0., 0., 0.], lowerLimits=self.lower_limits, upperLimits=self.upper_limits,

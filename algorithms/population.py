@@ -228,7 +228,7 @@ class Population:
         :return: fitnesses : list containing fitness associated to each individual
         :return: infos : list containing dicts for information associated to each individual
                          (keys : 'energy', 'reward', 'is_success', 'end effector position relative object',
-                         'end effector xyzw relative object', 'diversity_descriptor')
+                         'end effector xyzw relative object')
         """
 
 

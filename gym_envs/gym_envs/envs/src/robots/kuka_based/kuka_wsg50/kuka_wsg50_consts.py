@@ -18,7 +18,7 @@ KUKA_ARM_JOINT_ID_STATUS = {
     6:  {'name': 'J6',          'status': 'CONTROLLED',         'is_controllable': True},
 }
 
-KUKA_CLAW_GRIP_JOINT_ID_STATUS = {
+KUKA_WSG50_GRIP_JOINT_ID_STATUS = {
     7 :   {'name': 'gripper_to_arm',           'status': 'FIXED',        'part': 'gripper',   'is_controllable': False},
     8 :   {'name': 'base_left_finger_joint',   'status': 'CONTROLLED',   'part': 'gripper',   'is_controllable': True},
     9 :   {'name': 'left_finger_base_joint',   'status': 'FIXED',        'part': 'gripper',   'is_controllable': False},
@@ -34,7 +34,7 @@ KUKA_CLAW_GRIP_JOINT_ID_STATUS = {
 
 # --- General
 
-KUKA_WSF50_GRIP_ALL_JOINT_IDS = [j_id for j_id in KUKA_CLAW_GRIP_JOINT_ID_STATUS]
+KUKA_WSG50_GRIP_ALL_JOINT_IDS = [j_id for j_id in KUKA_WSG50_GRIP_JOINT_ID_STATUS]
 
 # --- Controlled
 
@@ -44,8 +44,8 @@ KUKA_ARM_CONTROLLED_JOINT_IDS = [
 ]
 
 WSG50_GRIP_CONTROLLED_JOINT_IDS = [
-    j_id for j_id in KUKA_CLAW_GRIP_JOINT_ID_STATUS
-    if KUKA_CLAW_GRIP_JOINT_ID_STATUS[j_id]['status'] == 'CONTROLLED'
+    j_id for j_id in KUKA_WSG50_GRIP_JOINT_ID_STATUS
+    if KUKA_WSG50_GRIP_JOINT_ID_STATUS[j_id]['status'] == 'CONTROLLED'
 ]
 
 # --- Controllable
@@ -56,8 +56,8 @@ KUKA_ARM_CONTROLLABLE_JOINT_IDS = [
 ]
 
 WSG50_GRIP_CONTROLLABLE_JOINT_IDS = [
-    j_id for j_id in KUKA_CLAW_GRIP_JOINT_ID_STATUS
-    if KUKA_CLAW_GRIP_JOINT_ID_STATUS[j_id]['is_controllable']
+    j_id for j_id in KUKA_WSG50_GRIP_JOINT_ID_STATUS
+    if KUKA_WSG50_GRIP_JOINT_ID_STATUS[j_id]['is_controllable']
 ]
 
 
@@ -124,7 +124,7 @@ jointid_lowerlim_upperlim = [
     (joint_id_base_left_tip_joint, -0.3, 0.1),
     (joint_id_base_right_tip_joint, -0.1, 0.3)
 ]
-KUKA_WSF50_CHANGE_DYNAMICS = {
+KUKA_WSG50_CHANGE_DYNAMICS = {
     **{id: {'lateralFriction': 1,
             'jointLowerLimit': lowlim,
             'jointUpperLimit': highlim,
