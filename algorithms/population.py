@@ -17,7 +17,7 @@ import os
 # trop de valeur par défaut : à refactore au propre
 class Population:
     def __init__(self, toolbox, prob_cx, max_pop_size=None, inds=None, genotype_len=None, n_reinit_flg=None,
-                 id_counter=None, bound_genotype_thresh=None, closer_genome_init_func=None, cx_flg=False,
+                 id_counter=None, bound_genotype_thresh=None, cx_flg=False,
                  curr_n_evals=None, len_pop=None):
 
         # Definitions
@@ -34,7 +34,6 @@ class Population:
 
         self._tournsize = consts.TOURNSIZE
 
-        self._closer_genome_init_func = closer_genome_init_func
 
         self._cx_flg = cx_flg  # Trigger cross over : False speeds up computation (no useless random() calls)
 
@@ -127,19 +126,6 @@ class Population:
         else:
             self._inds = toolbox.population(n=self._max_pop_size)
 
-        if self._closer_genome_init_func is not None:
-            ind_ids_iterable = range(len(self._inds))
-
-            closer_genomes = list(futures.map(self._closer_genome_init_func, ind_ids_iterable))
-            print('closer_genomes=', closer_genomes)
-
-            #pdb.set_trace()
-            assert len(closer_genomes) > 0
-            len_genome = len(closer_genomes[0])
-            for i_ind, genome in zip(ind_ids_iterable, closer_genomes):
-                for i_gene in range(len_genome):
-                    self._inds[i_ind][i_gene] = genome[i_gene]
-
         for ind in self._inds:
             self._init_ind(ind, curr_n_evals=curr_n_evals)
 
@@ -228,16 +214,16 @@ class Population:
     def get_fitnesses(self):
         return [ind.fitness.values[0] for ind in self.inds]
 
-    def evaluate_and_update_inds(self, evaluator, curr_n_evals=None):
+    def evaluate_and_update_inds(self, evaluate_fn, curr_n_evals=None):
         b_descriptors, fitnesses, infos = self.evaluate(
-            evaluator=evaluator,
+            evaluate_fn=evaluate_fn,
         )
         self.update_individuals(fitnesses, b_descriptors, infos, curr_n_evals=curr_n_evals)
 
-    def evaluate(self, evaluator):
-        """Evaluate the current population using evaluation function contained within evaluator.
+    def evaluate(self, evaluate_fn):
+        """Evaluate the current population using the function evaluate_fn.
 
-        :param evaluator: Evaluator object that contains the evaluate_individual function.
+        :param evaluate_fn: Evaluatate function (evaluate_fn(ind) -> output)
         :return: b_descriptors : list containing behavior descriptor associated to each individual
         :return: fitnesses : list containing fitness associated to each individual
         :return: infos : list containing dicts for information associated to each individual
@@ -245,9 +231,8 @@ class Population:
                          'end effector xyzw relative object', 'diversity_descriptor')
         """
 
-        eval_func = evaluator.ind_evaluation_func
 
-        evaluation_pop = list(self._toolbox.map(eval_func, self._inds))
+        evaluation_pop = list(self._toolbox.map(evaluate_fn, self._inds))
 
         b_descriptors, fitnesses, infos = map(list, zip(*evaluation_pop))
 

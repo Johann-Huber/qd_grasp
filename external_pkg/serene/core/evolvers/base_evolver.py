@@ -22,7 +22,7 @@ class BaseEvolver(object):
     self.mutation_operator = np.random.normal
     self.archive = Archive(parameters)
     self.update_criteria = None  # ['reward', 'novelty', 'surprise']
-    self.agent_template = None # self.params.agent_template # TODO REQUIRED PARAMS
+    self.agent_template = None
     self.evaluated_points = 0  # This is the counter of the total number of agents ever generated/evaluated
     self.emitter_based = False
     self.emitters_data = {}
@@ -103,7 +103,6 @@ class BaseEvolver(object):
         'Please specify a valid selection operator for the archive. Given {} - Valid: ["random", "best"]'.format(
           parameters.selection_operator))
 
-    # TODO This part gets slower with time.
     # Add to archive the first lambda offsprings in the idx list
     for i in idx[:parameters._lambda]:
       offsprings[i]['stored'] = generation

@@ -261,19 +261,14 @@ class Kuka_iiwa_allegro(RobotGrasping):
 
     def _reset_robot(self):
 
-        if self.closer_init_flg:
-            for j_id in env_consts.KUKA_ALLEGRO_JOINT_IDS:
-                self.p.resetJointState(self.robot_id, j_id, targetValue=0.)
+        for j_id in env_consts.KUKA_ALLEGRO_JOINT_IDS:
+            self.p.resetJointState(self.robot_id, j_id, targetValue=0.)
 
-        else:
-            for j_id in env_consts.KUKA_ALLEGRO_JOINT_IDS:
-                self.p.resetJointState(self.robot_id, j_id, targetValue=0.)
+        for j_id, j_val in zip(env_consts.KUKA_ALLEGRO_JOINT_IDS, env_consts.KUKA_ABOVE_OBJECT_INIT_POSITION):
+            self.p.resetJointState(self.robot_id, j_id, targetValue=j_val)
 
-            for j_id, j_val in zip(env_consts.KUKA_ALLEGRO_JOINT_IDS, env_consts.KUKA_ABOVE_OBJECT_INIT_POSITION):
-                self.p.resetJointState(self.robot_id, j_id, targetValue=j_val)
-
-            #  makes the palm face the table
-            self.p.resetJointState(self.robot_id, 6, targetValue=np.pi)
+        #  makes the palm face the table
+        self.p.resetJointState(self.robot_id, 6, targetValue=np.pi)
 
         j_id_thumb_opposition = 24
         HAND_PRESET_VALUES = {

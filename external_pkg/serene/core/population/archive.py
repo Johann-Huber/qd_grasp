@@ -16,10 +16,8 @@ class Archive(object):
   # ---------------------------------
   def __init__(self, parameters, name='archive'):
     self.data = deque() # This contains tuples with (agent_id, gt_bd bd, traj). The agent_id is necessary in case there are same bd-traj
-    # self.data = set() # If wanna use set
     self.params = parameters
-    self.stored_info = ['genome', 'bd', 'id', 'reward'] # ['genome', 'bd', 'id', 'reward', 'parent', 'born', 'stored', 'evaluated', 'ancestor', 'rew_area', 'gt_bd'] # self.params.archive_stored_info # Stuff is stored according to this order # TODO REQUIRED PARAMS
-    # are those fields enough?
+    self.stored_info = ['genome', 'bd', 'id', 'reward']
     self.name = name
     self.filled_tracker = []
   # ---------------------------------
@@ -77,16 +75,12 @@ class Archive(object):
     :param agent: agent to store
     :return:
     """
-    # If want to use set
-    # self.data.add((self._totuple(agent['genome']), self._totuple(agent['gt_bd']), self._totuple(agent['bd']),
-    #                self._totuple(agent['traj'])))
     try:
       genome = np.array(agent).tolist()
       bd = agent.behavior_descriptor.values
       id = agent.gen_info.values['id']
       reward = agent.fitness.values[0]
       self.data.append([genome, bd, id, reward])
-      #self.data.append([agent[info] for info in self.stored_info])
     except:
       pdb.set_trace()
     return True
@@ -139,7 +133,7 @@ class Archive(object):
       self.filled_tracker = data[1]
       self.data = data[0]
     else:
-      self.data = data # TODO remove this once all new exps are done
+      self.data = data
   # ---------------------------------
 
 class Grid(Archive):

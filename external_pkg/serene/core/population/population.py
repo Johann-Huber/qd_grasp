@@ -6,9 +6,9 @@ import pdb
 
 import numpy as np
 import _pickle as pkl
-from external_pkg.serene.environments import registered_envs
 
 import utils.constants as consts
+
 
 class Population(object):
   """
@@ -21,16 +21,11 @@ class Population(object):
     Constructor. Takes as input the parameters
     :param parameters:
     """
-    # self.agent_template = agent_template.copy()
 
     self.pop = []
     self.agent_id = 0
     self.name = name
-    #self.params = parameters
     self.agent_template = consts.serene_agent_template
-
-    # Instantiated only to extract genome size
-    #self.controller = registered_envs[self.params.env_name]['controller']['controller'](**registered_envs[self.params.env_name]['controller'])
 
     self.genome_size = parameters['genome_size']
     self.genome_limit = parameters['genome_limit']

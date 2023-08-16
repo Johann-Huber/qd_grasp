@@ -2,16 +2,16 @@
 # Date: 19/10/20
 import pdb
 
+import numpy as np
+import copy
+from itertools import chain
+
 from external_pkg.serene.core.evolvers import BaseEvolver
 from external_pkg.serene.core.evolvers import utils
-from external_pkg.serene.core.population import Population, Archive
-import numpy as np
-from scipy import special
-from external_pkg.serene.environments.environments import registered_envs
-from itertools import chain
-import copy
+from external_pkg.serene.core.population import Archive
 
 import utils.constants as consts
+
 
 class EmitterEvolver(BaseEvolver):
   """
@@ -23,13 +23,9 @@ class EmitterEvolver(BaseEvolver):
     self.update_criteria = 'novelty'
     self.rew_archive = Archive(parameters, name='rew_archive')
 
-    # Instantiated only to extract genome size
-    controller = None # registered_envs[self.params.env_name]['controller']['controller'](**registered_envs[self.params.env_name]['controller'])
-      # TODO REQUIRED PARAMS
-
     self.genome_size = parameters['genome_size']
-    self.bounds = parameters['genome_limit'] * np.ones((self.genome_size, len(parameters['genome_limit']))) # TODO REQUIRED PARAMS : correct shape? usage?
-    self.emitter_pop = None  #Population(self.params, init_size=self.params.emitter_population, name='emitter') # TODO REQUIRED PARAMS
+    self.bounds = parameters['genome_limit'] * np.ones((self.genome_size, len(parameters['genome_limit'])))
+    self.emitter_pop = None
     self.emitter_based = True
     self.archive_candidates = {}
     self.emitters = {}
@@ -45,27 +41,20 @@ class EmitterEvolver(BaseEvolver):
     :return:
     """
     # Get BSs
-
     population_bd = population.get_behavior_descriptors()
     offsprings_bd = offsprings.get_behavior_descriptors() if offsprings is not None else []
-
 
     reference_set = self.get_novelty_ref_set(population, offsprings)
     bd_set = population_bd + offsprings_bd
 
-    #pdb.set_trace()
-
     novelties = utils.calculate_novelties(bd_set, reference_set, distance_metric=consts.serene_novelty_distance_metric,
                                           novelty_neighs=consts.serene_k_novelty_neighs, pool=pool)
     # Update population and offsprings
-    #pdb.set_trace()
-    #population['novelty'] = novelties[:len(population)]
-    #offsprings['novelty'] = novelties[len(population):]
     novelties = [(nov,) for nov in novelties]
     population.update_novelties(novelties=novelties[:len(population)])
     offsprings.update_novelties(novelties=novelties[len(population):])
-    #pdb.set_trace()
     print("update nov over")
+
 
   def calculate_init_sigma(self, parameters, ns_pop, ns_off, mean):
     """
@@ -75,17 +64,15 @@ class EmitterEvolver(BaseEvolver):
     :param mean
     :return: step size
     """
-    #print('passage dans calculate init sigma')
     # This is the factor multiplying the std deviation that is used to choose which percentage of the gaussian to select
     number_of_std = 3
-    #pdb.set_trace()
+
     idxs = ns_pop.get_unique_ids() + ns_off.get_unique_ids() if ns_off is not None else ns_pop.get_unique_ids()
     idx = idxs.index(mean.gen_info.values['id'])
     genomes = np.array(ns_pop.inds).tolist() + np.array(ns_off.inds).tolist() if ns_off is not None \
       else np.array(ns_pop.inds).tolist()
     genomes.pop(idx)  # Remove element taken into account
 
-    #pdb.set_trace()
     distances = utils.calculate_distances([mean], np.array(genomes)).flatten()
     sigma = min(distances) / number_of_std
     if sigma == 0.: sigma = parameters['mutation_parameters']['sigma']
@@ -118,32 +105,28 @@ class EmitterEvolver(BaseEvolver):
       self.rewarding = {}
       iter_agent = chain(ns_pop, ns_off) if ns_off is not None else ns_pop
       for agent in iter_agent:
-        #print('IL Y A UN SUCCÈS ')
         is_non_null_fitness = agent.fitness.values[0] > 0
         is_not_already_emitter = 'emitter' not in agent.info.values
         if is_non_null_fitness and is_not_already_emitter:
           agent.info.values['emitter'] = True
           agent_uid = agent.gen_info.values['id']
           self.rewarding[agent_uid] = agent
-          #print('added uid = ', agent_uid)
 
           self.rew_archive.store(agent)  # They are also stored in the rew_archive
 
       # New emitters are added in the candidates list.
       # They will be added to the emitters list only if they can give some improvement
       for rew_agent in self.rewarding:
-        #pdb.set_trace()
         self.emitter_candidate[rew_agent] = self.create_emitter(
           parameters=parameters, parent_id=rew_agent, ns_pop=ns_pop, ns_off=ns_off, id_counter=id_counter
         )
         # get the last id_counter after having generated emitter's subpop
         id_counter = self.emitter_candidate[rew_agent].pop.id_counter
 
-      #print('self.emitter_candidate=', self.emitter_candidate)
       print('len(self.emitter_candidate)=', len(self.emitter_candidate))
-      return id_counter #True
+      return id_counter
 
-    return id_counter #False
+    return id_counter
 
 
   def update_reward_archive(self, generation, emitters, emitter_idx):
@@ -214,11 +197,6 @@ class EmitterEvolver(BaseEvolver):
     Emitters are chosen randomnly from the list by weighting the probability by their improvement
     :return:
     """
-    # improvements = np.atleast_2d(np.array([[em, self.emitters[em].improvement] for em in self.emitters]))
-    # idx = np.argmax(improvements[:, 1])
-    # return improvements[idx, 0]
-    # return np.random.choice(improvements[:, 0], p=special.softmax(improvements[:, 1]))
-
     em_data_np = []
     for em in self.emitters:
       em_data = [em, self.emitters[em].ancestor.behavior_descriptor.values, self.emitters[em].improvement]
@@ -280,12 +258,10 @@ class EmitterEvolver(BaseEvolver):
                                           ns_ref_set,
                                           distance_metric=consts.serene_novelty_distance_metric,
                                           novelty_neighs=consts.serene_k_novelty_neighs, pool=pool)
-    #pdb.set_trace()
 
     assert len(novelties) == len(self.emitters[emitter_idx].pop.inds)
     for i_ind, ind in enumerate(self.emitters[emitter_idx].pop.inds):
       self.emitters[emitter_idx].pop.inds[i_ind].novelty.values = (novelties[i_ind],)
-    #self.emitters[emitter_idx].pop.novelty.values = novelties
 
     # Save in the NS archive candidates buffer the agents with a novelty higher than the previous most novel
     for emitter_agent in self.emitters[emitter_idx].pop:
@@ -297,12 +273,10 @@ class EmitterEvolver(BaseEvolver):
     if novelties[most_novel] > self.emitters[emitter_idx].most_novel.novelty.values[0]:
       self.emitters[emitter_idx].pop.inds[most_novel].gen_info.values['id'] = id_counter  # Recognize most novel agent by giving it a valid ID
       self.emitters[emitter_idx].pop.inds[most_novel].gen_info.values['parent id'] = emitter_idx  # The emitter idx is saved as the parent of the most novel
-      #ns_pop.agent_id += 1  # Update max ID reached
       id_counter += 1
 
       self.emitters[emitter_idx].most_novel = self.emitters[emitter_idx].pop.inds[most_novel].copy()  # Update most novel
 
-    #pdb.set_trace()
     return id_counter
 
   def candidates_by_novelty(self, parameters, pool=None):
@@ -316,7 +290,7 @@ class EmitterEvolver(BaseEvolver):
 
     if self.rew_archive.size > 0 and len(candidates_idx) > 0:
 
-      reference_bd = self.rew_archive['bd']# + [self.emitters[idx].ancestor['bd'] for idx in self.emitters]
+      reference_bd = self.rew_archive['bd']
 
       candidates_bd = [self.emitter_candidate[idx].ancestor.behavior_descriptor.values for idx in candidates_idx]
 
@@ -388,3 +362,5 @@ class EmitterEvolver(BaseEvolver):
     :return:
     """
     raise NotImplementedError
+
+

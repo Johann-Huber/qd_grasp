@@ -56,7 +56,6 @@ class RobotGrasping(Env):
         fixed_arm=None,
         is_there_primitive_gene=None,
         run_name=None,
-        closer_init_flg=False,
         n_body_gripper=0,
         controller_type=None,
     ):
@@ -115,7 +114,6 @@ class RobotGrasping(Env):
         self.contact_ids = None  # robots' link ids with allowed contacts
         self.allowed_collision_pair = None  # 2D array (-1,2), list of pair of link id (int) allowed in autocollision
         self.initial_state = None  # robot initial state (used in robot_env)
-        self.closer_init_flg = None  #  whether the end effector init pose is closer to the targeted object
         self._do_noise_joints_pose = None  # whether to add noise to joint pose (open loop actions : 7dof pos) or not
         self.disabled_obj_robot_contact_ids = None  # list of robot joint id considered as autocollided if the obj touches it
 
@@ -176,7 +174,7 @@ class RobotGrasping(Env):
             n_control_gripper=n_control_gripper, ws_radius=ws_radius, center_workspace=center_workspace,
             contact_ids=contact_ids, allowed_collision_pair=allowed_collision_pair,
             disabled_collision_pair=disabled_collision_pair, initial_state=initial_state,
-            closer_init_flg=closer_init_flg, disabled_obj_robot_contact_ids=disabled_obj_robot_contact_ids,
+            disabled_obj_robot_contact_ids=disabled_obj_robot_contact_ids,
             is_there_primitive_gene=is_there_primitive_gene, n_body_gripper=n_body_gripper,
             controller_type=controller_type
         )
@@ -204,12 +202,11 @@ class RobotGrasping(Env):
         self.frictions = self._init_frictions()
 
     def _init_robot(self, robot_class, joint_ids, end_effector_id, n_control_gripper, ws_radius, center_workspace,
-                    contact_ids, allowed_collision_pair, disabled_collision_pair, initial_state, closer_init_flg,
+                    contact_ids, allowed_collision_pair, disabled_collision_pair, initial_state,
                     disabled_obj_robot_contact_ids, is_there_primitive_gene, n_body_gripper, controller_type):
 
         # Initializing bullet robot
         self.robot_class = robot_class
-        self.closer_init_flg = closer_init_flg
         self.controller_type = controller_type
 
         self.robot_id = self.robot_class()

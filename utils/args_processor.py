@@ -6,7 +6,7 @@ from functools import partial
 from pathlib import Path
 
 import gym
-from deap import base, creator
+#from deap import base, creator
 import evolutionary_process
 
 from utils.common_tools import arg_clean_str, wrapped_partial
@@ -82,7 +82,7 @@ def get_controller_info(robot_kwargs, env_kwargs, algo_variant):
 
 
 
-def get_eval_kwargs(parsed_args, robot_kwargs, evo_process, bd_flg, bd_bounds, env_kwargs, prehension_criteria,
+def get_eval_kwargs(parsed_args, robot_kwargs, evo_process, bd_bounds, bd_flg, env_kwargs, prehension_criteria,
                     algo_variant):
 
 
@@ -91,7 +91,6 @@ def get_eval_kwargs(parsed_args, robot_kwargs, evo_process, bd_flg, bd_bounds, e
     bd_bounds = bd_bounds
     nb_steps_to_rollout = robot_kwargs['nb_steps_to_rollout']
     n_it_closing_grip = robot_kwargs['n_it_closing_grip']
-    close_while_touch = robot_kwargs['close_while_touch']
     no_contact_table = parsed_args.contact_table
 
     controller_class = get_controller_class(robot_kwargs)
@@ -110,23 +109,20 @@ def get_eval_kwargs(parsed_args, robot_kwargs, evo_process, bd_flg, bd_bounds, e
         'no_contact_table': no_contact_table,
         'controller_class': controller_class,
         'controller_info': controller_info,
-        'close_while_touch': close_while_touch,
         'algo_variant': algo_variant,
     }
     return eval_kwargs
 
 
 
-def get_robot_kwargs(robot_name, closer_init=False, object=None):
+def get_robot_kwargs(robot_name, object=None):
 
     env_name = env_consts.ROBOT_KWARGS[robot_name]['gym_env_name']
     gene_per_keypoints = env_consts.ROBOT_KWARGS[robot_name]['gene_per_keypoints']
     link_id_contact = env_consts.ROBOT_KWARGS[robot_name]['link_id_contact']
     nb_steps_to_rollout = env_consts.ROBOT_KWARGS[robot_name]['nb_steps_to_rollout']
-    close_while_touch = env_consts.ROBOT_KWARGS[robot_name]['close_while_touch']
 
-    nb_iter = env_consts.ROBOT_KWARGS[robot_name]['nb_iter_ref'] if not closer_init else \
-        env_consts.ROBOT_KWARGS[robot_name]['nb_iter_ref'] / 2
+    nb_iter = env_consts.ROBOT_KWARGS[robot_name]['nb_iter_ref']
     nb_iter = int(nb_iter / nb_steps_to_rollout)
 
     cst_it_close_grip = int(nb_iter * 3 / 4)
@@ -143,7 +139,6 @@ def get_robot_kwargs(robot_name, closer_init=False, object=None):
         'cst_it_close_grip': cst_it_close_grip,
         'n_it_closing_grip': n_it_closing_grip,
         'controller_type': controller_type,
-        'close_while_touch': close_while_touch,
 
     }
 
@@ -184,10 +179,9 @@ def get_genotype_len(robot_kwargs, controller_info):
     with_synergies_controller = controller_info['with_synergies'] if 'with_synergies' in controller_info else False
 
     n_gens_waypoints = consts.NB_KEYPOINTS * robot_kwargs['gene_per_keypoints']
-    n_gen_time_close = 1 if not consts.T_CLOSE_WHEN_TOUCH_ONLY else 0
     n_gen_grasp_primitive_label = 1 if with_synergies_controller else 0
 
-    return n_gens_waypoints + n_gen_time_close + n_gen_grasp_primitive_label
+    return n_gens_waypoints + n_gen_grasp_primitive_label
 
 
 def arg_handler_greater(name, min, value):
@@ -262,24 +256,10 @@ def parse_input_args():
     parser.add_argument("-s", "--disable-state",
                         action="store_false",
                         help="Disable restore state: load each time the environment (slower) but it is more deterministic")
-    parser.add_argument("-pb", "--proxy-bd",
-                        action="store_true",
-                        help="Depreciated.")
-    parser.add_argument("-vb", "--vanilla-bd",
-                        action="store_true",
-                        help="Depreciated")
-    parser.add_argument("-sm", "--speed-control-mode",
-                        type=int,
-                        default=None,
-                        choices=[0, 1, 2, 3],
-                        help="Depreciated.")
     parser.add_argument("-nbr", "--n-budget-rollout",
                         type=int,
                         default=None,
                         help="Maximum number of evaluation (= rollout) before ending the evolutionary process.")
-    parser.add_argument("-ci", "--closer-init",
-                        action="store_true",
-                        help="Depreciated.")
 
     return parser.parse_args()
 
@@ -287,11 +267,11 @@ def parse_input_args():
 def get_qd_algo_args(cfg):
 
     algo_variant = cfg['algorithm']
-    parallelize = cfg['parallelize']
     pop_size = cfg['evo_proc']['pop_size']
     n_saved_ind_early_stop = cfg['evo_proc']['n_saved_ind_early_stop']
     n_budget_rollouts = cfg['evo_proc']['n_budget_rollouts']
-    bd_flg = cfg['evo_proc']['bd_flg']
+    #bd_flg = cfg['evo_proc']['bd_flg']
+
     evo_process = cfg['evo_proc']['evo_process']
     mut_flg = cfg['evo_proc']['mut_flg']
     novelty_metric = cfg['evo_proc']['novelty_metric']
@@ -301,10 +281,7 @@ def get_qd_algo_args(cfg):
     controller_class = cfg['evaluate']['kwargs']['controller_class']
     prob_cx = cfg['evo_proc']['prob_cx']
 
-    archive_limit_size = consts.ARCHIVE_LIMIT_SIZE
-    archive_limit_strat = consts.ARCHIVE_LIMIT_STRAT
-    nb_cells = consts.NB_CELLS
-    measures = consts.DO_MEASURES
+    bd_flg = consts.BD_FLG
     bound_genotype_thresh = consts.BOUND_GENOTYPE_THRESH
 
     obj_vertices_poses = cfg['object']['vertices_poses']
@@ -314,24 +291,17 @@ def get_qd_algo_args(cfg):
     env_name = cfg['robot']['kwargs']['env_name']
     targeted_object = cfg['env']['kwargs']['object_name']
     controller_type = cfg['robot']['kwargs']['controller_type']
-    close_while_touch = cfg['evaluate']['kwargs']['close_while_touch']
     scene_details = {
         'env_name': env_name,
         'targeted_object': targeted_object,
         'controller_type': controller_type,
-        'close_while_touch': close_while_touch
     }
 
     genotype_len = get_genotype_len(robot_kwargs=cfg['robot']['kwargs'], controller_info=controller_info)
 
     args = {
         'algo_variant': algo_variant,
-        'parallelize': parallelize,
         'pop_size': pop_size,
-        'measures': measures,
-        'archive_limit_size': archive_limit_size,
-        'archive_limit_strat': archive_limit_strat,
-        'nb_cells': nb_cells,
         'n_saved_ind_early_stop': n_saved_ind_early_stop,
         'n_budget_rollouts': n_budget_rollouts,
         'bd_flg': bd_flg,
@@ -366,7 +336,6 @@ def get_prehension_criteria_list(prehension_criteria_str):
 def initialize_cpu_multicore_data():
     args = parse_input_args()
 
-    PARALLELIZE = consts.WITH_SCOOP
     DISPLAY = args.display
     POP_SIZE = args.population
     OBJECT = args.object
@@ -374,23 +343,21 @@ def initialize_cpu_multicore_data():
     ROBOT = args.robot
     ALGO_VARIANT = args.algorithm
     EVO_PROCESS = consts.ALGO_EVO_PROCESS[ALGO_VARIANT]
-    BD_FLG = args.behavior_descriptor
+    BD_FLG = consts.BD_FLG
     MUT_FLG = consts.ALGO_MUT_FLGS[ALGO_VARIANT]
     BD_BOUNDS = consts.BD_METAPARAMS[BD_FLG]['bd_bounds']
     LOG_PATH = args.log_path
     FOLDER_NAME = args.folder_name
     N_SAVED_IND_EARLY_STOP = args.early_stopping
     N_BUDGET_ROLLOUTS = args.n_budget_rollout
-    CLOSER_INIT_FLG = args.closer_init
     PREHENSION_CRITERIA_STR = args.prehension_criteria
     assert PREHENSION_CRITERIA_STR in consts.SUPPORTED_PREHENSION_CRITERIA_STR
     PREHENSION_CRITERIA = get_prehension_criteria_list(PREHENSION_CRITERIA_STR)
 
-    ROBOT_KWARGS = get_robot_kwargs(robot_name=ROBOT, closer_init=CLOSER_INIT_FLG, object=OBJECT)
+    ROBOT_KWARGS = get_robot_kwargs(robot_name=ROBOT, object=OBJECT)
 
     ENV_KWARGS = get_env_kwargs(robot_name=ROBOT, object_name=OBJECT, robot_kwargs=ROBOT_KWARGS)
     ENV_KWARGS['display'] = DISPLAY
-    ENV_KWARGS['closer_init_flg'] = CLOSER_INIT_FLG
 
     if ALGO_VARIANT in consts.PYRIBS_QD_VARIANTS:
         POP_SIZE = consts.CMA_MAE_POP_SIZE
@@ -421,35 +388,34 @@ def initialize_cpu_multicore_data():
         NOVELTY_METRIC = 'minkowski'
 
     # deal with Scoop parallelization
-    if PARALLELIZE:
-        creator.create('BehaviorDescriptor', list)
-        creator.create('GenInfo', dict)
-        creator.create('Info', dict)
-        if EVO_PROCESS in consts.MULTI_BD_EVO_PROCESSES:
-            creator.create('Novelty', list)
-        else:
-            creator.create('Novelty', base.Fitness, weights=(1.0,))
+    '''
+    creator.create('BehaviorDescriptor', list)
+    creator.create('GenInfo', dict)
+    creator.create('Info', dict)
+    if EVO_PROCESS in consts.MULTI_BD_EVO_PROCESSES:
+        creator.create('Novelty', list)
+    else:
+        creator.create('Novelty', base.Fitness, weights=(1.0,))
 
-        if EVO_PROCESS in consts.EVO_PROCESS_WITH_LOCAL_COMPETITION:
-            creator.create('Fit', base.Fitness, weights=(1.0, 1.0))  #  (novelty, local_quality)
-        elif ALGO_VARIANT in consts.ARCHIVE_BASED_NOVELTY_FITNESS_SELECTION_ALGO_VARIANTS:
-            creator.create('Fit', base.Fitness, weights=(1.0, 1.0))  #  (novelty, normalized_fitness)
-        else:
-            creator.create('Fit', base.Fitness, weights=(-1.0,))
+    if EVO_PROCESS in consts.EVO_PROCESS_WITH_LOCAL_COMPETITION:
+        creator.create('Fit', base.Fitness, weights=(1.0, 1.0))  #  (novelty, local_quality)
+    elif ALGO_VARIANT in consts.ARCHIVE_BASED_NOVELTY_FITNESS_SELECTION_ALGO_VARIANTS:
+        creator.create('Fit', base.Fitness, weights=(1.0, 1.0))  #  (novelty, normalized_fitness)
+    else:
+        creator.create('Fit', base.Fitness, weights=(-1.0,))
 
-        creator.create('Individual', list, behavior_descriptor=creator.BehaviorDescriptor,
-                       novelty=creator.Novelty, fitness=creator.Fit, info=creator.Info,
-                       gen_info=creator.GenInfo)
+    creator.create('Individual', list, behavior_descriptor=creator.BehaviorDescriptor,
+                   novelty=creator.Novelty, fitness=creator.Fit, info=creator.Info,
+                   gen_info=creator.GenInfo)
 
-        evolutionary_process.set_creator(creator)
-
+    evolutionary_process.set_creator(creator)
+    '''
 
     # Scoop requires each core to have the used metaparams loaded in RAM. Those args must therefore be initialized as
     # global variables.
 
     MULTICORE_SHARED_CFG = {
         'algorithm': ALGO_VARIANT,
-        'parallelize': PARALLELIZE,
 
         'evo_proc': {
             'pop_size': POP_SIZE,

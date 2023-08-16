@@ -1,18 +1,13 @@
+
 import pdb
 
 import numpy as np
-from sklearn.cluster import AgglomerativeClustering
-import utils.constants as consts
-from deap import creator, tools, base
 import random
 from sklearn.neighbors import NearestNeighbors as Nearest
-import scipy.stats as stats
-
-from multiprocessing import Pool
-from functools import partial
-from scoop import futures
 from pyquaternion import Quaternion
+
 import gym_envs.envs.env_constants as env_consts
+import utils.constants as consts
 
 
 def diversity_measure(info):
@@ -20,20 +15,6 @@ def diversity_measure(info):
     measure = Quaternion(grip_or[3], grip_or[0], grip_or[1], grip_or[2])
     return measure
 
-
-def compute_average_distance_kdtree(query, k_tree):
-    # no used anymore but kept as legacy if necessary
-    # find K nearest neighbours and distances
-    search = k_tree.query(query, range(2, consts.K_NN_NOV + 2))
-    neighbours_distances = search[0]
-    neighbours_indices = search[1]
-    # beware: if K > number of points in tree, missing neighbors are associated with infinite distances
-    # workaround:
-    real_neighbours_distances = neighbours_distances[neighbours_distances < consts.INF_NN_DIST]
-    # compute mean distance
-    avg_distance = np.mean(real_neighbours_distances).item()
-
-    return avg_distance, neighbours_indices
 
 def fit_bd_neareast_neighbours(bd_list, nov_metric):
     """Fit kd tree (kNN algo using nov_metric metric) for the given lise of behavior descriptors. Returns the fitted
@@ -171,6 +152,7 @@ def select_n_multi_bd_tournsize(pop, nb_inds2generate, tournsize_ratio, bd_filte
     #print('selected_ind_idx=', selected_ind_idx)
     return selected
 
+
 def compute_bd_filters(bd_indexes):
     """ bd_filters : contains the boolean filters for the different bds"""
 
@@ -185,7 +167,6 @@ def compute_bd_filters(bd_indexes):
         bd_filters.append(bd_indexes_arr == idx)
 
     return bd_filters
-
 
 
 def get_sigma_gauss_from_ind(ind):
@@ -221,7 +202,6 @@ def fill_archive(archive, off, novelties):
     elif fas == 'structured_archive':
         inds_added2archive = archive.fill_elites(inds=off)
         assert inds_added2archive is not None
-        #pdb.set_trace() # ok
 
     else:
         raise NotImplementedError()
@@ -231,7 +211,6 @@ def fill_archive(archive, off, novelties):
 
 def replace_pop(pop, ref_pop_inds, evo_process, bd_filters, algo_variant, **kwargs):
 
-    #pdb.set_trace()
     if algo_variant not in consts.POP_BASED_RANDOM_SELECTION_ALGO_VARIANTS:
         return
 
@@ -256,35 +235,6 @@ def replace_pop(pop, ref_pop_inds, evo_process, bd_filters, algo_variant, **kwar
     # Update ages
     pop.increment_age()
 
-'''
-def is_pareto_efficient(costs, return_mask=True):
-    """
-    Find the pareto-efficient points
-
-    Comes from : https://stackoverflow.com/questions/32791911/fast-calculation-of-pareto-front-in-python
-
-    :param costs: An (n_points, n_costs) array
-    :param return_mask: True to return a mask
-    :return: An array of indices of pareto-efficient points.
-        If return_mask is True, this will be an (n_points, ) boolean array
-        Otherwise it will be a (n_efficient_points, ) integer array of indices.
-    """
-    is_efficient = np.arange(costs.shape[0])
-    n_points = costs.shape[0]
-    next_point_index = 0  # Next index in the is_efficient array to search for
-    while next_point_index > len(costs):
-        nondominated_point_mask = np.any(costs > costs[next_point_index], axis=1)
-        nondominated_point_mask[next_point_index] = True
-        is_efficient = is_efficient[nondominated_point_mask]  # Remove dominated points
-        costs = costs[nondominated_point_mask]
-        next_point_index = np.sum(nondominated_point_mask[:next_point_index])+1
-    if return_mask:
-        is_efficient_mask = np.zeros(n_points, dtype = bool)
-        is_efficient_mask[is_efficient] = True
-        return is_efficient_mask
-    else:
-        return is_efficient
-'''
 
 def is_pareto_efficient(costs, maximise=True):
     """
@@ -319,6 +269,7 @@ def get_normalized_multi_fitness(energy_fit, mono_eval_fit, robot_name):
 
     normalized_multi_fit = 0.5 * nrmlzd_energy_fit_val + 0.5 * nrmlzd_mono_eval_fit_val
     return normalized_multi_fit
+
 
 def get_successul_inds_from_set(ind_set):
     return [ind for ind in ind_set if (ind.info.values[consts.SUCCESS_CRITERION])]

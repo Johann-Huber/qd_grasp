@@ -32,7 +32,7 @@ def collect_ball_obs(traj):
   # Trajectory is normalized.
   # What we return is a list of 2 samples along the traj
   samples = np.concatenate(np.array([t[3]['robot_pos'][:2] for t in traj[1:]])[::int(2000/2)])
-  return np.array([samples]) / 600 #TODO VEIRIFCA
+  return np.array([samples]) / 600
 
 def hard_maze_obs(traj):
   """

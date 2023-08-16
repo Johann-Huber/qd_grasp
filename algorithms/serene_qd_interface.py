@@ -1,15 +1,15 @@
 
 import pdb
-import traceback
-import numpy as np
-from external_pkg.serene.core.searcher import Searcher
-import datetime
 
+from external_pkg.serene.core.searcher import Searcher
 from algorithms.archives.outcome_archive import OutcomeArchive
+
 from utils.progression_monitoring import ProgressionMonitoring
 from utils.io_run_data import dump_archive_success_routine, export_running_data_routine
-import utils.constants as consts
 from utils.evo_main_routines import init_archive
+
+import utils.constants as consts
+
 
 def init_searcher_params(qds_args):
     mutation_parameters = {
@@ -29,7 +29,6 @@ def init_searcher_params(qds_args):
         'toolbox': qds_args['toolbox'],
         'reinit_research_flg': qds_args['reinit_research_flg'],
         'bound_genotype_thresh': qds_args['bound_genotype_thresh'],
-        'closer_genome_init_func': qds_args['closer_genome_init_func'],
         'prob_cx': qds_args['prob_cx'],
         'pop_size': qds_args['pop_size']
     }
@@ -41,10 +40,9 @@ def run_qd_serene(
     toolbox,
     reinit_research_flg,
     bound_genotype_thresh,
-    closer_genome_init_func,
     prob_cx,
     pop_size,
-    evaluator,
+    evaluate_fn,
     outcome_archive_kwargs,
     stats_tracker,
     algo_variant,
@@ -80,10 +78,9 @@ def run_qd_serene(
         'toolbox': toolbox,
         'reinit_research_flg': reinit_research_flg,
         'bound_genotype_thresh': bound_genotype_thresh,
-        'closer_genome_init_func': closer_genome_init_func,
         'prob_cx': prob_cx,
         'pop_size': pop_size,
-        'evaluator': evaluator,
+        'evaluate_fn': evaluate_fn,
         'outcome_archive': outcome_archive,
         'archive': archive,
         'stats_tracker': stats_tracker,
@@ -118,7 +115,6 @@ def run_qd_serene(
         id_counter = searcher.chunk_step(qds_args=qds_args, searcher_params=serene_params, id_counter=id_counter)
 
         evaluated_points = qds_args['progression_monitoring'].n_eval
-
 
     print('end of run serene')
     pop = searcher.population

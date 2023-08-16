@@ -28,11 +28,6 @@ class ControllerRoot(ABC):
         self.lock_end_eff_start_time = None
         self.lock_end_eff_end_time = None
 
-    def _initialize_grip_time(self, individual, nb_iter):
-        assert self.i_action_grip_close is not None
-        if not consts.T_CLOSE_WHEN_TOUCH_ONLY:
-            grip_time = int((individual[self.i_action_grip_close] + 1) / 2 * nb_iter)
-            self.update_grip_time(grip_time)
 
     def _clip_action(self, action):
         return np.clip(action, min=self.a_min, max=self.a_max) if (self.a_min is not None or self.a_max is not None) \

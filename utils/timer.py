@@ -12,17 +12,14 @@ class Timer:
         self._t_starts = {}  # dict containing the start time associated to each timer label
         self._times_in_s = {}   # dict containing the elapsed time associated to each timer label
 
-
     def start(self, label):
         self._start_sanity_checks(label)
         self._t_starts[label] = time.time()
-
 
     def stop(self, label):
         self._stop_sanity_checks(label)
         self._times_in_s[label] = time.time() - self._t_starts[label]
         self._clean_label_t_start(label)
-
 
     def get_all(self, format='seconds'):
 
@@ -50,7 +47,6 @@ class Timer:
     def _clean_label_t_start(self, label):
         self._t_starts.pop(label)
 
-
     def _start_sanity_checks(self, label):
         if not isinstance(label, str):
             raise AttributeError(f'Timer label must be a str (type = {type(label)})')
@@ -58,7 +54,6 @@ class Timer:
             raise AttributeError(f'Double call of Timer.start() for a same label ({label})')
         if label in self._times_in_s:
             raise AttributeError(f'Label already used ({label})')
-
 
     def _stop_sanity_checks(self, label):
         if not isinstance(label, str):
@@ -86,7 +81,6 @@ class Timer:
                 strings.append("%s %s%s" % (period_value, period_name, has_s))
 
         return ", ".join(strings)
-
 
 
 def timer_debug_snippet():

@@ -50,7 +50,6 @@ def calculate_distances(bd_set, reference_set, distance_metric='euclidean'):
   :return:
   """
   if distance_metric == 'euclidean':
-    # TODO this operation might become slower when the archive grows. Might have to parallelize as well by doing it myself
     distance_matrix = cdist(bd_set, reference_set, metric='euclidean')
   elif distance_metric == 'mahalanobis':
     distance_matrix = cdist(bd_set, reference_set, metric='mahalanobis')

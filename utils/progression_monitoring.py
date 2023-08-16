@@ -1,7 +1,6 @@
 
 import pdb
 import tqdm
-import utils.constants as consts
 
 
 class ProgressionMonitoring:

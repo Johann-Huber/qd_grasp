@@ -1,4 +1,4 @@
-# Quality Diversity for Grasping in Robotics
+# Quality Diversity for Grasping in Robotics (QD-Grasp)
 
 
 This code allows the generation of repertoires of diverse and high performing grasping trajectories, with Quality-Diversity methods.

@@ -178,10 +178,6 @@ class KukaGrasping(RobotGrasping):
         return env_consts.KUKA_ABOVE_OBJECT_INIT_POSITION_JOINTS
 
     def _reset_robot(self):
-        if self.closer_init_flg:
-            for j_id, j_val in zip(env_consts.KUKA_JOINT_IDS, env_consts.KUKA_ABOVE_OBJECT_INIT_POSITION):
-                self.p.resetJointState(self.robot_id, j_id, targetValue=j_val)
-        else:
-            for j_id in env_consts.KUKA_JOINT_IDS:
-               self.p.resetJointState(self.robot_id, j_id, targetValue=0.)
+        for j_id in env_consts.KUKA_JOINT_IDS:
+           self.p.resetJointState(self.robot_id, j_id, targetValue=0.)
 

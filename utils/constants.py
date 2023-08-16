@@ -1,6 +1,7 @@
 
-import pathlib
 import pdb
+
+import pathlib
 from enum import Enum
 import os
 
@@ -47,8 +48,7 @@ SelectOffspringStrategy = Enum(
 SUPPORTED_VARIANTS_NAMES = STANDARD_VARIANTS + QD_VARIANTS + PYRIBS_QD_VARIANTS + SERENE_QD_VARIANTS
 
 # Conditions on variants
-VARIANTS_WITH_EVO_PROC_REINIT = [
-    'nsmbs', 'nslc', 'me_scs', 'me_nov', 'me_rand', 'me_fit', 'me_nov_scs', 'me_nov_fit', 'random', 'ns', 'fit']
+VARIANTS_NO_EVO_PROCESS_REINIT = []
 
 SINGLE_BD_NSLC_ALGO_VARIANTS = ['nslc']
 NSLC_ALGO_VARIANTS = SINGLE_BD_NSLC_ALGO_VARIANTS
@@ -92,9 +92,9 @@ ALGO_MUT_FLGS = {'nsmbs': 'gauss',
                  'ns': 'gauss',
                  'nslc': 'gauss',
                  'me_scs': 'gauss',
-                 'cma_mae': 'cma_mae',
-                 'cma_es': 'cma_mae',
-                 'cma_me': 'cma_mae',
+                 'cma_mae': 'pyribs_mut',
+                 'cma_es': 'pyribs_mut',
+                 'cma_me': 'pyribs_mut',
                  'serene': 'serene',
                  'me_fit': 'gauss',
                  'me_rand': 'gauss',
@@ -102,10 +102,14 @@ ALGO_MUT_FLGS = {'nsmbs': 'gauss',
                  'me_nov_scs': 'gauss',
                  'me_nov_fit': 'gauss'}
 
-SUPPORTED_MUT_FLGS = {'gauss'}
+SUPPORTED_MUT_FLGS = {'gauss', 'pyribs_mut', 'serene'}
 
 # Novely metadata associated to each bd_flg
+
+BD_FLG = 'pos_touch'
+
 BD_BOUNDS_END_EFFECTOR_POS = [-0.35, 0.35], [-0.15, 0.2], [-0.2, 0.5]
+
 BD_METAPARAMS = {
     'pos_touch': {
         'bd_bounds': [[-0.35, 0.35], [-0.15, 0.2], [-0.2, 0.5]],
@@ -122,7 +126,7 @@ BD_FLG_TO_BD_NAMES = {
 
 FIXED_VALUE_UNDEFINED_BD_FILL = 0.
 
-# Clustering and distande computation
+# Clustering and distance computation
 DIFF_OR_THRESH = 0.4  # threshold for clustering grasping orientations
 K_NN_NOV = 15  # number of nearest neighbours for novelty computation
 INF_NN_DIST = 1000000000  # for security against infinite distances in KDtree queries
@@ -157,8 +161,6 @@ SUPPORTED_CONTROLLERS = {
     'interpolate keypoints finger synergies'
 }
 NB_KEYPOINTS = 3
-
-T_CLOSE_WHEN_TOUCH_ONLY = False
 
 
 #----------------------------------------------------------------------------------------------------------------------#
@@ -246,9 +248,6 @@ N_SCS_RUN_DATA_KEY = 'Number of successful individuals (archive_success len)'
 # POST PROCESSING
 #----------------------------------------------------------------------------------------------------------------------#
 
-# Behavior space uniform sampling
-NB_CELLS = 1000
-
 # Plotting
 EXPORT_PLOT = True
 SUPPORTED_DUMP_PATH_TYPES = {str, pathlib.PosixPath}
@@ -257,7 +256,6 @@ SUPPORTED_TIMER_FORMATS = {'seconds', 'h:m:s'}
 
 
 # Execution
-WITH_SCOOP = True
 RETURN_SUCCESS_CODE = 0
 RETURN_FAILURE_CODE = 1
 

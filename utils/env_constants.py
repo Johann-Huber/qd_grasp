@@ -9,7 +9,6 @@ ROBOT_KWARGS = {
         'nb_iter_ref': 2000,
         'n_it_closing_grip': 25,
         'controller_type': 'interpolate keypoints cartesian speed control grip',
-        'close_while_touch': True,
     },
 
     'kuka_iiwa_allegro_ik': {
@@ -20,7 +19,6 @@ ROBOT_KWARGS = {
         'nb_iter_ref': 1500,
         'n_it_closing_grip': 50,
         'controller_type': 'interpolate keypoints cartesian finger synergies',
-        'close_while_touch': True,
     },
 }
 

@@ -1,20 +1,12 @@
 # Created by Giuseppe Paolo 
 # Date: 27/07/2020
 
-#Here I make the class that creates everything. I pass the parameters as init arguments, this one creates the param class, and the pop, arch, opt alg
-
-import os
+#import os
 import pdb
 
 from external_pkg.serene.core.population import Population
-from external_pkg.serene.core.evolvers import NoveltySearch, CMAES, CMANS, NSGAII, SERENE, MAPElites, CMAME, RandomSearch
+from external_pkg.serene.core.evolvers import SERENE
 from external_pkg.serene.core.serene_utils import evaluate_grasp_serene
-from external_pkg.serene.core.behavior_descriptors.behavior_descriptors import BehaviorDescriptor
-from external_pkg.serene.core import Evaluator
-import multiprocessing as mp
-#from timeit import default_timer as timer
-import gc
-from external_pkg.serene.analysis.logger import Logger
 
 from algorithms.population import Population
 
@@ -24,12 +16,10 @@ from utils.evo_main_routines import select_offspring_routine, mutate_offspring_r
 from utils.novelty_computation import update_novelty_routine
 import utils.constants as consts
 
-import numpy as np
+#import numpy as np
 
-evaluator = None
-main_pool = None # Using pool as global prevents the creation of new environments at every generation
-
-
+#evaluator = None
+#main_pool = None # Using pool as global prevents the creation of new environments at every generation
 
 
 class Searcher(object):
@@ -38,22 +28,7 @@ class Searcher(object):
   """
   def __init__(self, parameters, id_counter):
     self.parameters = parameters
-
-    '''
-    self.bd_extractor = BehaviorDescriptor(self.parameters)
-    '''
-
     self.generation = 1
-
-    ''' handeled with scoop
-    if self.parameters.multiprocesses:
-      global main_pool
-      main_pool = mp.Pool(initializer=self.init_process, processes=self.parameters.multiprocesses)
-    
-    self.evaluator = Evaluator(self.parameters)
-    
-    self.population = Population(self.parameters, init_size=self.parameters.pop_size)
-    '''
 
     self.population = Population(
         toolbox=parameters['toolbox'],
@@ -61,7 +36,6 @@ class Searcher(object):
         genotype_len=parameters['genotype_len'],
         n_reinit_flg=parameters['reinit_research_flg'],
         bound_genotype_thresh=parameters['bound_genotype_thresh'],
-        closer_genome_init_func=parameters['closer_genome_init_func'],
         curr_n_evals=0,
         prob_cx=parameters['prob_cx'],  #  should be useless here : to refactore
         id_counter=id_counter
@@ -70,27 +44,6 @@ class Searcher(object):
     self.offsprings = None
 
     self.evolver = SERENE(self.parameters)
-  '''
-  def init_process(self):
-    """
-    This function is used to initialize the pool so each process has its own instance of the evaluator
-    :return:
-    """
-    global evaluator
-    evaluator = Evaluator(self.parameters)
-  '''
-  '''
-  def _feed_eval(self, agent):
-    """
-    This function feeds the agent to the evaluator and returns the updated agent
-    :param agent:
-    :return:
-    """
-    global evaluator
-    if agent['evaluated'] == None: # Agents are evaluated only once
-      agent = evaluator(agent, self.bd_extractor.__call__)
-    return agent
-  '''
 
   def evaluate_in_env(self, pop, pool=None):
     """
@@ -113,11 +66,11 @@ class Searcher(object):
     :return:
     """
     toolbox = qds_args['toolbox']
-    evaluator = qds_args['evaluator']
+    evaluate_fn = qds_args['evaluate_fn']
     progression_monitoring = qds_args['progression_monitoring']
-    outcome_archive = qds_args['outcome_archive']  # todo bien mise à jour ? ou copie crée ?
+    outcome_archive = qds_args['outcome_archive']
     archive = qds_args['archive']
-    stats_tracker = qds_args['stats_tracker']  # todo bien mise à jour ? ou copie crée ?
+    stats_tracker = qds_args['stats_tracker']
     prob_cx = qds_args['prob_cx']
 
     fixed_attr_dict = {
@@ -126,10 +79,8 @@ class Searcher(object):
         'genotype_len': qds_args['genotype_len'],
         'reinit_research_flg': qds_args['reinit_research_flg'],
         'bound_genotype_thresh': qds_args['bound_genotype_thresh'],
-        'closer_genome_init_func': qds_args['closer_genome_init_func'],
         'algo_variant': qds_args['algo_variant'],
         'outcome_archive_kwargs': qds_args['outcome_archive_kwargs'],
-        'evaluator': evaluator,
         'is_novelty_required': qds_args['is_novelty_required'],
         'evo_process': qds_args['evo_process'],
         'bd_indexes': qds_args['bd_indexes'],
@@ -147,7 +98,7 @@ class Searcher(object):
     # Evaluate population in the environment only the first time
     if self.init_pop:
       objective_batch, measure_batch, infos_batch = evaluate_grasp_serene(
-        toolbox=toolbox, evaluator=evaluator, inds=self.population.inds
+        toolbox=toolbox, evaluate_fn=evaluate_fn, inds=self.population.inds
       )
 
       self.population.update_individuals(
@@ -165,8 +116,7 @@ class Searcher(object):
           bd_indexes=qds_args['bd_indexes'],
           bd_filters=qds_args['bd_filters'],
           novelty_metric=qds_args['novelty_metric'],
-          algo_variant=qds_args['algo_variant'],
-          bd_bounds=qds_args['bd_bounds']
+          algo_variant=qds_args['algo_variant']
       )
 
       archive.fill(
@@ -185,7 +135,6 @@ class Searcher(object):
       self.evolver.evaluation_budget -= len(self.population)
       budget_chunk -= len(self.population)
 
-      #pdb.set_trace()  # ok
       self.init_pop = False
 
     ref_pop_inds = self.population
@@ -199,12 +148,6 @@ class Searcher(object):
         id_counter=id_counter,
         **fixed_attr_dict
       )
-
-      off_bds = self.offsprings.get_behavior_descriptors()
-      #pdb.set_trace()
-      n_touch = np.sum([1 if bd != [0., 0., 0.] else 0 for bd in off_bds])
-      #print('NS off_bds=', off_bds)
-      #print('NS off n_touch=', n_touch)
 
       mutate_offspring_routine(
         off=self.offsprings,
@@ -224,7 +167,7 @@ class Searcher(object):
       )
 
       objective_batch, measure_batch, infos_batch = evaluate_grasp_serene(
-          toolbox=toolbox, evaluator=evaluator, inds=inv_pop.inds
+          toolbox=toolbox, evaluate_fn=evaluate_fn, inds=inv_pop.inds
       )
 
       inv_pop.update_individuals(
@@ -258,8 +201,6 @@ class Searcher(object):
 
       id_counter = self.evolver.init_emitters(parameters=self.parameters, ns_pop=self.population, ns_off=self.offsprings,
                                  id_counter=id_counter)
-      #print('after emitter : id_counter=', id_counter) # ok
-      #pdb.set_trace()
 
       # ---------------------------------------- FILL ARCHIVE --------------------------------------
 
@@ -318,12 +259,10 @@ class Searcher(object):
           pool=None,
           id_counter=id_counter
       )
-      #self.evolver.rew_archive.save(self.parameters.save_path, 'gen_{}'.format(self.generation))
-
-      # todo : eval update, and "elaborate" ?
 
       # Update the performaces due to possible changes in the pop and archive given by the emitters
       self.evolver.evaluate_performances(self.population, self.offsprings, pool=None)
+
       # Update main archive with the archive candidates from the emitters
       self.evolver.elaborate_archive_candidates(parameters=searcher_params, generation=self.generation)
 
@@ -336,8 +275,6 @@ class Searcher(object):
     updates archive and population and finally saves offsprings, population and archive.
     :return: time taken for running the generation
     """
-    #global main_pool
-    #start_time = timer()
 
     print("\nRemaining budget: {}".format(self.evolver.evaluation_budget))
 
@@ -354,16 +291,13 @@ class Searcher(object):
       n_scs_after_ms = len(qds_args['outcome_archive'].get_successful_inds())
       print('after main search : n_scs_after_ms = ', n_scs_after_ms)
 
-
-    #pdb.set_trace()
-
     # -------------------
     # Emitters part
     # -------------------
     budget_chunk = consts.serene_chunk_size
     # Starts only if a reward has been found.
     if self.evolver.evaluation_budget > 0:
-      print("EMITTERS: {}".format(len(self.evolver.emitters))) # TODO REPRENDRE ICI (en forçant une fit, on devrait retourner dans l'ajout des emit là haut)
+      print("EMITTERS: {}".format(len(self.evolver.emitters)))
 
       n_scs_before_es = len(qds_args['outcome_archive'].get_successful_inds())
       print('before emitter search : len(archive_scs) = ', n_scs_before_es)
@@ -375,4 +309,4 @@ class Searcher(object):
       print('after emitter search : len(archive_scs) = ', n_scs_after_es)
     # -------------------
 
-    return id_counter #self.evolver.evaluated_points
+    return id_counter

@@ -56,14 +56,11 @@ class JointController(ControllerSpace):
             n_genes_per_keypoint=n_genes_per_keypoint
         )
 
-        self._initialize_grip_time(individual=individual, nb_iter=nb_iter)
-
     def _extract_joint_actions_from_genome(self, individual, n_keypoints):
         # individual = [arm_poses, t_close, (label_primitive)]
         # extract arm poses : individual[:i_action_grip_close], with i_action_grip_close == t_close
         assert self.i_action_grip_close is not None
-        joint_actions_normalized = np.split(np.array(individual), n_keypoints) if consts.T_CLOSE_WHEN_TOUCH_ONLY \
-            else np.split(np.array(individual[:self.i_action_grip_close]), n_keypoints)
+        joint_actions_normalized = np.split(np.array(individual), n_keypoints)
         return joint_actions_normalized
 
     def _compute_open_loop_trajectory(self, individual, nb_iter, n_keypoints, initial, n_genes_per_keypoint):
@@ -142,8 +139,6 @@ class InverseKinematicsController(ControllerSpace):
 
         self.waypoints_6dof, self.i_step2targeted_wp_list = \
             self._compute_trajectory_ik_way_points(individual=individual)
-
-        self._initialize_grip_time(individual=individual, nb_iter=nb_iter)
 
 
         #pdb.set_trace()

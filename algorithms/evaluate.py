@@ -13,15 +13,7 @@ import time
 import algorithms.controllers.controller_params as ctrl_params
 
 
-def get_random_closer_cartesian_pos(robot):
-    raise NotImplementedError()
-
-
-def generate_init_genome_operational_space(i_sample, eval_kwargs, robot, env):
-    raise NotImplementedError
-
-
-def evaluate_grasp_ind(individual, env, robot, eval_kwargs, with_quality, n_reset_safecheck):
+def evaluate_grasp_ind(individual, env, robot, eval_kwargs, n_reset_safecheck):
 
     evo_process = eval_kwargs['evo_process']
     bd_flg = eval_kwargs['bd_flg']
@@ -34,7 +26,6 @@ def evaluate_grasp_ind(individual, env, robot, eval_kwargs, with_quality, n_rese
     controller_info = eval_kwargs['controller_info']
     n_it_closing_grip = eval_kwargs['n_it_closing_grip']
     prehension_criteria = eval_kwargs['prehension_criteria']
-    close_while_touch = eval_kwargs['close_while_touch']
     algo_variant = eval_kwargs['algo_variant']
 
     env.reset(load='state' if consts.RESET_MODE else 'all')
@@ -71,8 +62,7 @@ def evaluate_grasp_ind(individual, env, robot, eval_kwargs, with_quality, n_rese
     obj_pos_init, obj_orient_init = env.p.getBasePositionAndOrientation(env.obj_id)
     all_pos_obj_before_grasp, all_orient_obj_before_grasp = [], []
 
-    if close_while_touch:
-        controller.update_grip_time(grip_time=consts.INF_FLOAT_CONST)  # disable grasping before touching
+    controller.update_grip_time(grip_time=consts.INF_FLOAT_CONST)  # disable grasping before touching
 
     nrmlized_pos_arm = env.get_joint_state(normalized=True)
     nrmlized_pos_arm_prev = nrmlized_pos_arm
@@ -111,11 +101,10 @@ def evaluate_grasp_ind(individual, env, robot, eval_kwargs, with_quality, n_rese
 
             is_already_touched = True
 
-            if close_while_touch:
-                #  close grip at first touch
-                controller.update_grip_time(grip_time=i_step)
-                controller.last_i = i_step
-                nrmlized_pos_arm = nrmlized_pos_arm_prev
+            # Close grip at first touch
+            controller.update_grip_time(grip_time=i_step)
+            controller.last_i = i_step
+            nrmlized_pos_arm = nrmlized_pos_arm_prev
 
         if info['touch'] and i_start_closing is not None:
             grip_info["diff(t_close, t_touch)"] = i_step - i_start_closing
@@ -274,7 +263,7 @@ def evaluate_grasp_ind(individual, env, robot, eval_kwargs, with_quality, n_rese
     return behavior.tolist(), dummy_fitness, info_out
 
 
-def exception_handler_evaluate_grasp_ind(individual, eval_kwargs, with_quality):
+def exception_handler_evaluate_grasp_ind(individual, eval_kwargs):
 
     evo_process = eval_kwargs['evo_process']
     prehension_criteria = eval_kwargs['prehension_criteria']
@@ -296,7 +285,6 @@ def exception_handler_evaluate_grasp_ind(individual, eval_kwargs, with_quality):
         'energy': 0,
         'n_steps_before_grasp': consts.INF_FLOAT_CONST,
         'reward': 0,
-        'with_quality': with_quality,
         'normalized_multi_fit': 0.,
         'touch_var': -consts.INF_FLOAT_CONST if 'touch_var' in prehension_criteria else None,
     }

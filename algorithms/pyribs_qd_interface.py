@@ -48,10 +48,9 @@ def init_archive_pyribs(solution_dim, algo_variant):
     return GridArchive(**archive_kwargs)
 
 
-def evaluate_grasp_pyribs(toolbox, evaluator, inds):
-    eval_func = evaluator.ind_evaluation_func
+def evaluate_grasp_pyribs(toolbox, evaluate_fn, inds):
 
-    evaluation_pop = list(toolbox.map(eval_func, inds))
+    evaluation_pop = list(toolbox.map(evaluate_fn, inds))
 
     b_descriptors, is_scs_fitnesses, infos = map(list, zip(*evaluation_pop))
 
@@ -67,16 +66,14 @@ def evaluate_grasp_pyribs(toolbox, evaluator, inds):
 
 
 def run_qd_pyribs(
-    creator,
     toolbox,
-    evaluator,
+    evaluate_fn,
     stats_tracker,
     genotype_len,
     n_budget_rollouts,
     reinit_research_flg,
     outcome_archive_kwargs,
     bound_genotype_thresh,
-    closer_genome_init_func,
     prob_cx,
     timer,
     run_name,
@@ -119,14 +116,13 @@ def run_qd_pyribs(
             genotype_len=genotype_len,
             n_reinit_flg=reinit_research_flg,
             bound_genotype_thresh=bound_genotype_thresh,
-            closer_genome_init_func=closer_genome_init_func,
             curr_n_evals=progression_monitoring.n_eval,
-            prob_cx=prob_cx,  #  should be useless here : to refactore
+            prob_cx=prob_cx,
         )
         pop.set_genomes_to_deap_pop(genomes=solution_batch)
 
         objective_batch, measure_batch, infos_batch = evaluate_grasp_pyribs(
-            toolbox=toolbox, evaluator=evaluator, inds=solution_batch
+            toolbox=toolbox, evaluate_fn=evaluate_fn, inds=solution_batch
         )
         #pdb.set_trace()
         pop.update_individuals(

@@ -4,7 +4,6 @@ from utils.constants import SelectOffspringStrategy
 from algorithms.population import Population
 import numpy as np
 
-
 from algorithms.archives.novelty_archive import NoveltyArchive
 from algorithms.archives.elite_structured_archive import EliteStructuredArchive
 from algorithms.archives.elite_novelty_structured_archive import EliteNoveltyStructuredArchive
@@ -89,7 +88,7 @@ def select_offspring_routine(pop, ref_pop_inds, novelty_metric, nb_offsprings_to
 
     oss = get_offspring_selection_strategy(algo_variant)
 
-    if oss == SelectOffspringStrategy.RANDOM_FROM_POP :
+    if oss == SelectOffspringStrategy.RANDOM_FROM_POP:
         off_inds = select_off_inds(
             pop=pop,
             nb_offsprings_to_generate=nb_offsprings_to_generate,
@@ -121,7 +120,6 @@ def select_offspring_routine(pop, ref_pop_inds, novelty_metric, nb_offsprings_to
 
     elif oss == SelectOffspringStrategy.FORCE_SUCCESS_BASED_FROM_STRUCTURED_ARCHIVE:
         off_inds = archive.select_force_success_based(n_sample=pop_size)
-
 
     else:
         raise NotImplementedError()
@@ -158,6 +156,7 @@ def mutate_offspring(off, bound_genotype_thresh, evo_process, outcome_archive, m
     else:
         raise AttributeError(f'Unknown mutation flag: mut_flg={mut_flg}')
 
+
 def mutate_offspring_routine(
         off,
         bound_genotype_thresh,
@@ -186,6 +185,7 @@ def mutate_offspring_routine(
     off.update_scs2scs_metrics()
 
     update_pop_id_counter(pop=pop, off=off)
+
 
 def get_offspring_selection_strategy(algo_variant):
 

@@ -2,19 +2,17 @@
 # Date: 05/10/20
 import pdb
 
-from external_pkg.serene.core.evolvers import EmitterEvolver
-from external_pkg.serene.core.evolvers import utils
-#from external_pkg.serene.core.population import Population, Archive
+import numpy as np
+import copy
+
+from external_pkg.serene.core.population import Population as SerenePopulation
+from external_pkg.serene.core.evolvers import EmitterEvolver, utils
 from external_pkg.serene.core.serene_utils import evaluate_grasp_serene
 
 from algorithms.population import Population
 
-from external_pkg.serene.core.population import Population as SerenePopulation
-
-import numpy as np
-import copy
-from external_pkg.serene.analysis.logger import Logger
 import utils.constants as consts
+
 
 class FitnessEmitter(object):
   """
@@ -22,24 +20,17 @@ class FitnessEmitter(object):
   """
   def __init__(self, ancestor, mutation_rate, parameters, id_counter):
 
-    #pdb.set_trace()
     self.ancestor = ancestor
     self._init_mean = np.array(self.ancestor).tolist()
     self.id = ancestor.gen_info.values['id']
     self._mutation_rate = mutation_rate
-    #print(f'(FitnessEmitter) calculated mutation rate : {mutation_rate}')
-
-    #self._params = parameters
     self._pop_size = consts.emitter_population_len
 
     self.pop = self._init_pop(
       toolbox=parameters['toolbox'], id_counter=id_counter, prob_cx=parameters['prob_cx'],
       curr_n_evals=parameters['progression_monitoring'].n_eval, parameters=parameters
     )
-
-    # TODO <--- faire l'init de pop
     self.ns_arch_candidates = SerenePopulation(parameters, init_size=0, name='ns_arch_cand')
-    #self.ns_arch_candidates = None
 
     # List of lists. Each inner list corresponds to the values obtained during a step
     # We init with the ancestor reward so it's easier to calculate the improvement
@@ -59,7 +50,7 @@ class FitnessEmitter(object):
     Called at the end of the emitter evaluation cycle
     :return:
     """
-    if self._init_values is None: # Only needed at the fist time
+    if self._init_values is None:  # Only needed at the fist time
 
       self._init_values = self.values[:3]
     self.improvement = np.max([np.mean(self.values[-3:]) - np.mean(self._init_values), 0])
@@ -75,7 +66,6 @@ class FitnessEmitter(object):
     :param genome:
     :return:
     """
-    #pdb.set_trace()
     genome = genome + np.random.normal(0, self._mutation_rate, size=np.shape(genome))
     return genome.clip(parameters['genome_limit'][0], parameters['genome_limit'][1])
 
@@ -93,9 +83,6 @@ class FitnessEmitter(object):
     )
     # set genomes to each individuals
     pop.set_genomes_to_deap_pop(genomes=mutated_genomes)
-    #pop = Population(self._params, self._pop_size)
-    #for agent in pop:
-    #  agent['genome'] = self.mutate_genome(self._init_mean)
     return pop
 
   def generate_off(self, parameters, generation, toolbox, id_counter, prob_cx, curr_n_evals):
@@ -103,7 +90,6 @@ class FitnessEmitter(object):
     This function generates the offsprings of the emitter
     :return:
     """
-    #pdb.set_trace()
 
     # init deap pop
     off = Population(
@@ -111,42 +97,16 @@ class FitnessEmitter(object):
       max_pop_size=2*self._pop_size, len_pop=2*self._pop_size
     )
 
-    # genereate 2 offsprings from each parent
+    # generate 2 offspring from each parent
     mutated_genomes = []
     for agent in self.pop:
       mutated_genomes.append(self.mutate_genome(parameters=parameters, genome=agent))
       mutated_genomes.append(self.mutate_genome(parameters=parameters, genome=agent))
 
-    #mutated_genomes = [self.mutate_genome(agent) for agent in self.pop] + \
-    #                  [self.mutate_genome(agent) for agent in self.pop]
-
     # set genomes to each individuals
     off.set_genomes_to_deap_pop(genomes=mutated_genomes)
 
-    '''
-    # TODO Are infos about ancestors and ids required ? come back later here if required
-    #offsprings = Population(self._params, init_size=2*self.pop.size, name='offsprings')
-    off_genomes = []
-    off_ancestors = []
-    off_parents = []
-    for agent in self.pop:  # Generate 2 offsprings from each parent
-      off_genomes.append(self.mutate_genome(agent['genome']))
-      off_genomes.append(self.mutate_genome(agent['genome']))
-      off_ancestors.append(agent['ancestor'] if agent['ancestor'] is not None else agent['id'])
-      off_ancestors.append(agent['ancestor'] if agent['ancestor'] is not None else agent['id'])
-      off_parents.append(agent['id'])
-      off_parents.append(agent['id'])
-
-    off_ids = self.pop.agent_id + np.array(range(len(offsprings)))
-
-    offsprings['genome'] = off_genomes
-    offsprings['id'] = off_ids
-    offsprings['ancestor'] = off_ancestors
-    offsprings['parent'] = off_parents
-    offsprings['born'] = [generation] * offsprings.size
-    self.pop.agent_id = max(off_ids) + 1 # This saves the maximum ID reached till now
-    '''
-    return off  #offsprings
+    return off
 
   def update_pop(self, offsprings):
     """
@@ -154,26 +114,17 @@ class FitnessEmitter(object):
     :param offsprings:
     :return:
     """
-    #pdb.set_trace()
+
     performances = self.pop.get_fitnesses() + offsprings.get_fitnesses()
 
-    #performances = self.pop['reward'] + offsprings['reward']
     idx = np.argsort(performances)[::-1]  # Order idx according to performances.
-    #parents_off = self.pop.pop + offsprings.pop
     parents_off = self.pop.inds + offsprings.inds
+
     # Update population list by going through it and putting an agent from parents+off at its place
-
-    #pdb.set_trace() # get fitnesse of self.pop here
-
     for new_pop_idx, old_pop_idx in zip(range(len(self.pop)), idx[:len(self.pop)]):
-      prev_genome2replace = self.pop.inds[new_pop_idx]
       assert len(self.pop.inds[new_pop_idx]) == len(parents_off[old_pop_idx])
       self.pop.inds[new_pop_idx] = parents_off[old_pop_idx]
-      #for i_gen, gen_val in enumerate(prev_genome2replace):
-      #  self.pop.inds[new_pop_idx][i_gen] = parents_off[old_pop_idx][i_gen]
-      ##self.pop.pop[new_pop_idx] = parents_off[old_pop_idx]
 
-    #pdb.set_trace()  #  get fitnesse of self.pop here : diff ?
     return
 
   def should_stop(self):
@@ -198,13 +149,14 @@ class SERENE(EmitterEvolver):
     :return:
     """
 
-    return FitnessEmitter(#ancestor=self.rewarding[parent_id].copy(),
-                          ancestor=self.rewarding[parent_id],
-                          mutation_rate=self.calculate_init_sigma(
-                            parameters=parameters, ns_pop=ns_pop, ns_off=ns_off, mean=self.rewarding[parent_id]
-                          ),
-                          parameters=parameters,
-                          id_counter=id_counter)
+    return FitnessEmitter(
+      ancestor=self.rewarding[parent_id],
+      mutation_rate=self.calculate_init_sigma(
+        parameters=parameters, ns_pop=ns_pop, ns_off=ns_off, mean=self.rewarding[parent_id]
+      ),
+      parameters=parameters,
+      id_counter=id_counter
+    )
 
   def candidate_emitter_eval(self, searcher_params, qds_args, evaluate_in_env, budget_chunk, generation, id_counter,
                              pool=None):
@@ -217,10 +169,7 @@ class SERENE(EmitterEvolver):
     print(f'(candidate_emitter_eval) n_scs_before_emit={n_scs_before_emit}')
 
     candidates = self.candidates_by_novelty(parameters=searcher_params, pool=pool)
-    #pdb.set_trace() # TODO : reprendre ici. <= passer la fonction d'éval en arg, et l'insérer dans la fonction
 
-    # self.params.toolbox.evaluate ?
-    evaluator = qds_args['evaluator']
     toolbox = qds_args['toolbox']
     progression_monitoring = qds_args['progression_monitoring']
 
@@ -233,7 +182,7 @@ class SERENE(EmitterEvolver):
       #-----
       emitter_candidate_subpop = self.emitter_candidate[candidate].pop.inds
       objective_batch, measure_batch, infos_batch = evaluate_grasp_serene(
-        toolbox=toolbox, evaluator=evaluator, inds=emitter_candidate_subpop
+        toolbox=toolbox, evaluate_fn=qds_args['evaluate_fn'], inds=emitter_candidate_subpop
       )
       self.emitter_candidate[candidate].pop.update_individuals(
         fitnesses=[(fit,) for fit in objective_batch],
@@ -241,7 +190,6 @@ class SERENE(EmitterEvolver):
         infos=infos_batch,
         curr_n_evals=progression_monitoring.n_eval
       )
-
 
       added_inds, scs_inds_generated = qds_args['outcome_archive'].update(self.emitter_candidate[candidate].pop)
 
@@ -254,9 +202,9 @@ class SERENE(EmitterEvolver):
       )
 
       # Update counters
-      self.evaluated_points += len(self.emitter_candidate[candidate].pop) # self.params.emitter_population
-      self.evaluation_budget -= len(self.emitter_candidate[candidate].pop) #self.params.emitter_population
-      budget_chunk -= len(self.emitter_candidate[candidate].pop) # self.params.emitter_population
+      self.evaluated_points += len(self.emitter_candidate[candidate].pop)
+      self.evaluation_budget -= len(self.emitter_candidate[candidate].pop)
+      budget_chunk -= len(self.emitter_candidate[candidate].pop)
 
       for i in range(5):  # Evaluate emitter on 6 generations
 
@@ -270,11 +218,10 @@ class SERENE(EmitterEvolver):
           prob_cx=searcher_params['prob_cx'],
           curr_n_evals=searcher_params['progression_monitoring'].n_eval,
         )
-        #pdb.set_trace()  # update id_count with higher id_counter after having generated new emitter's subpop
         id_counter = offsprings.id_counter
 
         objective_batch, measure_batch, infos_batch = evaluate_grasp_serene(
-          toolbox=toolbox, evaluator=evaluator, inds=offsprings.inds
+          toolbox=toolbox, evaluate_fn=qds_args['evaluate_fn'], inds=offsprings.inds
         )
         offsprings.update_individuals(
           fitnesses=[(fit,) for fit in objective_batch],
@@ -332,7 +279,6 @@ class SERENE(EmitterEvolver):
     :param pool: Multiprocessing pool
     :return:
     """
-    #pdb.set_trace()
     n_scs_before_emit = len(qds_args['outcome_archive'].get_successful_inds())
     print(f'(emitter_step) n_scs_before_emit={n_scs_before_emit}')
     budget_chunk, id_counter = self.candidate_emitter_eval(
@@ -379,13 +325,13 @@ class SERENE(EmitterEvolver):
           prob_cx=searcher_params['prob_cx'],
           curr_n_evals=searcher_params['progression_monitoring'].n_eval
           )
-        #pdb.set_trace()  # update id_count with higher id_counter after having generated new emitter's subpop
+
         id_counter = offsprings.id_counter
 
         #-----
         # evals
         objective_batch, measure_batch, infos_batch = evaluate_grasp_serene(
-          toolbox=searcher_params['toolbox'], evaluator=qds_args['evaluator'], inds=offsprings.inds
+          toolbox=searcher_params['toolbox'], evaluate_fn=qds_args['evaluate_fn'], inds=offsprings.inds
         )
         offsprings.update_individuals(
           fitnesses=[(fit,) for fit in objective_batch],
@@ -425,6 +371,7 @@ class SERENE(EmitterEvolver):
                                                   'archived': self.emitters[emitter_idx].archived}
 
           self.archive_candidates[emitter_idx] = copy.deepcopy(self.emitters[emitter_idx].ns_arch_candidates)
+
           # Store parent once the emitter is finished
           self.rew_archive.store(self.emitters[emitter_idx].ancestor)
           print("Stopped after {} steps\n".format(self.emitters[emitter_idx].steps))
