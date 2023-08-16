@@ -191,6 +191,7 @@ class RobotGrasping(Env):
 
     def _init_object(self, object_name, object_position, object_xyzw):
         self.object_position = object_position
+        #pdb.set_trace()
         self.object_xyzw = object_xyzw
 
         if object_name is None:

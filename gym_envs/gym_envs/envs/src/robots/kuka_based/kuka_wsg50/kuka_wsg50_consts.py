@@ -33,9 +33,6 @@ KUKA_CLAW_GRIP_JOINT_ID_STATUS = {
 #                 HYPERPARAMETERS
 # ---------------------------------------------- #
 
-KUKA_WS_RADIUS = 1.2
-
-
 KUKA_DEFAULT_INIT_OBJECT_POSITION = [0., 0.15, -0.18318535463122008]
 
 KUKA_JOINT_IDS = [0, 1, 2, 3, 4, 5, 6, 8, 10, 11, 13]

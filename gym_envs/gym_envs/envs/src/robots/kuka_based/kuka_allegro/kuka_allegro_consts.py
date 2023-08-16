@@ -45,10 +45,34 @@ KUKA_ALLEGRO_GRIP_JOINT_ID_STATUS = {
 
 # Key variables
 
-ALLEGRO_HAND_CONTROLLED_J_IDS = [
+# --- General
+
+KUKA_ALLEGRO_GRIP_ALL_JOINT_IDS = [j_id for j_id in KUKA_ALLEGRO_GRIP_JOINT_ID_STATUS]
+
+# --- Controlled
+
+KUKA_ARM_CONTROLLED_JOINT_IDS = [
+    j_id for j_id in KUKA_ARM_JOINT_ID_STATUS
+    if KUKA_ARM_JOINT_ID_STATUS[j_id]['status'] == 'CONTROLLED'
+]
+
+ALLEGRO_HAND_CONTROLLED_JOINT_IDS = [
     j_id for j_id in KUKA_ALLEGRO_GRIP_JOINT_ID_STATUS
     if KUKA_ALLEGRO_GRIP_JOINT_ID_STATUS[j_id]['status'] == 'CONTROLLED'
 ]
+
+# --- Controllable
+
+KUKA_ARM_CONTROLLABLE_JOINT_IDS = [
+    j_id for j_id in KUKA_ARM_JOINT_ID_STATUS
+    if KUKA_ARM_JOINT_ID_STATUS[j_id]['is_controllable']
+]
+
+ALLEGRO_HAND_CONTROLLABLE_JOINT_IDS = [
+    j_id for j_id in KUKA_ALLEGRO_GRIP_JOINT_ID_STATUS
+    if KUKA_ALLEGRO_GRIP_JOINT_ID_STATUS[j_id]['is_controllable']
+]
+
 
 
 # ---------------------------------------------- #
@@ -130,5 +154,28 @@ HAND_MANUALLY_PRESET_VALUES = {
 MANUALLY_PRESET_VALUES = {**ARM_MANUALLY_PRESET_VALUES, **HAND_MANUALLY_PRESET_VALUES}
 
 
+# ---------------------------------------------- #
+#                   COMMANDS
+# ---------------------------------------------- #
+
+OPEN_GRIP_COMMAND_VALUE = 1.
+CLOSE_GRIP_COMMAND_VALUE = -1.
+VALID_GRIP_COMMAND_VALUES = [OPEN_GRIP_COMMAND_VALUE, CLOSE_GRIP_COMMAND_VALUE]
+
+
+
+# ---------------------------------------------- #
+#                    SCENE
+# ---------------------------------------------- #
+
+KUKA_ALLEGRO_DEFAULT_OBJECT_POSE = [0, 0.1, 0]
+
+KUKA_ALLEGRO_CENTER_WORKSPACE = 0
+
+KUKA_ALLEGRO_DISABLE_COLLISION_PAIRS = []
+KUKA_ALLEGRO_CHANGE_DYNAMICS = {**{}, **{j_id: {'maxJointVelocity': 0.5} for j_id in KUKA_ARM_JOINT_ID_STATUS}}
+
+KUKA_ALLEGRO_TABLE_HEIGHT = 0.8
+KUKA_ALLEGRO_END_EFFECTOR_JOINT_ID = 7
 
 
