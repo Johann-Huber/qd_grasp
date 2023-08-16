@@ -27,63 +27,31 @@ import gym_envs.envs.src.robots.kuka_based.kuka_wsg50.kuka_wsg50_consts as kw_co
 
 class KukaWsg50Grasping(RobotGrasping):
 
-    def __init__(self, object_position=kw_consts.KUKA_DEFAULT_INIT_OBJECT_POSITION, **kwargs):
+    def __init__(self, **kwargs):
 
-        table_height = env_consts.TABLE_HEIGHT
+        self.i_action_grip_close = -1
+        self.n_dof_arm = len(kw_consts.KUKA_ARM_JOINT_ID_STATUS)
 
-        n_control_gripper = self._get_n_dof_gripper()
-        end_effector_id = kw_consts.KUKA_END_EFFECTOR_ID
-        center_workspace = kw_consts.KUKA_CENTER_WORKSPACE
-
-        ws_radius = ku_consts.KUKA_WS_RADIUS
-
-        disabled_collision_pair = kw_consts.KUKA_DISABLED_COLLISION_PAIRS
-
-        joint_ids = kw_consts.KUKA_JOINT_IDS
-
-        contact_ids = kw_consts.KUKA_CONTACT_IDS
-
-        joint_id_base_left_finger = 8
-        joint_id_base_right_finger = 11
-        joint_id_base_left_tip_joint = 10
-        joint_id_base_right_tip_joint = 13
-
-        jointid_lowerlim_upperlim = [
-            (joint_id_base_left_finger, -0.5, -0.05),
-            (joint_id_base_right_finger, 0.05, 0.5),
-            (joint_id_base_left_tip_joint, -0.3, 0.1),
-            (joint_id_base_right_tip_joint, -0.1, 0.3)
-        ]
-
-        change_dynamics = {
-            **{id: {'lateralFriction': 1,
-                    'jointLowerLimit': lowlim,
-                    'jointUpperLimit': highlim,
-                    'jointLimitForce': 10,
-                    'jointDamping': 0.5,
-                    'maxJointVelocity': 0.5} for id, lowlim, highlim in jointid_lowerlim_upperlim
-            },
-            **{i: {'maxJointVelocity': 0.5,
-                   'jointLimitForce': 100 if i==1 else 1 if i==6 else 50} for i in range(7)}
+        kuka_wsg50_kwargs = {
+            'robot_class': self._load_model,
+            'n_control_gripper': self._get_n_dof_gripper(),
+            'object_position': kw_consts.KUKA_DEFAULT_INIT_OBJECT_POSITION,
+            'table_height': env_consts.TABLE_HEIGHT,
+            'joint_ids': kw_consts.KUKA_JOINT_IDS,
+            'contact_ids': kw_consts.KUKA_CONTACT_IDS,
+            'end_effector_id':  kw_consts.KUKA_END_EFFECTOR_ID,
+            'center_workspace': kw_consts.KUKA_CENTER_WORKSPACE,
+            'ws_radius': ku_consts.KUKA_WS_RADIUS,
+            'disabled_collision_pair': kw_consts.KUKA_DISABLED_COLLISION_PAIRS,
+            'change_dynamics': kw_consts.KUKA_WSF50_CHANGE_DYNAMICS,
+            'is_there_primitive_gene': False,
         }
 
         super().__init__(
-            robot_class=self._load_model, #load_kuka,
-            object_position=object_position,
-            table_height=table_height,
-            joint_ids=joint_ids,
-            contact_ids=contact_ids,
-            n_control_gripper=n_control_gripper,
-            end_effector_id=end_effector_id,
-            center_workspace=center_workspace,
-            ws_radius=ws_radius,
-            disabled_collision_pair=disabled_collision_pair,
-            change_dynamics=change_dynamics,
-            is_there_primitive_gene=False,
+            **kuka_wsg50_kwargs,
             **kwargs,
         )
 
-        self.n_dof_arm = len(kw_consts.KUKA_ARM_JOINT_ID_STATUS)
 
 
     def step(self, action):
@@ -96,7 +64,7 @@ class KukaWsg50Grasping(RobotGrasping):
 
         # Convert action to a gym-grasp compatible command
         gripper_command = self._get_gripper_command(action)
-        arm_command = action[:-1]
+        arm_command = action[:self.i_action_grip_close]
         robot_command = np.hstack([arm_command, gripper_command])
 
         # Send the command to the robot
@@ -105,16 +73,22 @@ class KukaWsg50Grasping(RobotGrasping):
     def _load_model(self):
         cwd = Path(gym_envs.__file__).resolve().parent / "envs"
         robot_id = self.p.loadSDF(str(cwd / "3d_models/robots/kuka_iiwa/kuka_gripper_end_effector.sdf"))[0]
-        self.p.resetBasePositionAndOrientation(robot_id, [-0.1, -0.5, -0.5], [0., 0., 0., 1.])
+        self.p.resetBasePositionAndOrientation(
+            robot_id,
+            kw_consts.KUKA_WSG50_BASE_POSITION,
+            kw_consts.KUKA_WSG50_BASE_ORIENTATION
+        )
         return robot_id
 
+
     def _is_gripper_closed(self, action):
-        is_closed = action[-1] < 0
+        is_closed = action[self.i_action_grip_close] < 0
         return is_closed
 
     def _get_gripper_command(self, action):
         # action = [cmd_each_joint, cmd_grip] -> cmd = [cmd_each_joint, -cmd_grip, -cmd_grip, cmd_grip, cmd_grip]
-        fingers_cmd = [-action[-1], -action[-1], action[-1], action[-1]]
+        action_grip_genome_val = action[self.i_action_grip_close]
+        fingers_cmd = [-action_grip_genome_val, -action_grip_genome_val, action_grip_genome_val, action_grip_genome_val]
         return fingers_cmd
 
     def _get_arm_controllable_joint_ids(self):

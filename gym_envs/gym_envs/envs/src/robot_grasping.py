@@ -650,7 +650,6 @@ class RobotGrasping(Env):
         raise NotImplementedError('Must be overloaded')
 
     def _update_info(self, action, observation):
-        self.info['closed gripper'] = self._is_gripper_closed(action)
 
         is_obj_initialized = observation.tolist() != consts.BULLET_DUMMY_OBS
 

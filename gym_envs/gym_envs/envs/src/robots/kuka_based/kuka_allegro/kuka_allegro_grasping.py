@@ -107,13 +107,13 @@ class KukaAllegroGrasping(RobotGrasping):
         return ka_consts.KUKA_ALLEGRO_GRIP_ALL_JOINT_IDS
 
     def _is_gripper_closed(self, action):
-        is_closed = action[-1] < 0
+        is_closed = action[self.i_action_grip_close] < 0
         return is_closed
 
     def _get_gripper_command_primitives(self, action_gripper_genome_val, primitive_genome_val):
         assert action_gripper_genome_val in ka_consts.VALID_GRIP_COMMAND_VALUES
 
-        is_closing = action_gripper_genome_val == ka_consts.CLOSE_GRIP_COMMAND_VALUE #-1
+        is_closing = action_gripper_genome_val == ka_consts.CLOSE_GRIP_COMMAND_VALUE
         if is_closing:
             return self._get_constant_closure_grip_primitives(primitive_label=primitive_genome_val)
 

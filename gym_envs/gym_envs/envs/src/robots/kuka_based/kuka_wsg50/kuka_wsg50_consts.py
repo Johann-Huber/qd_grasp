@@ -99,7 +99,8 @@ KUKA_INIT_POS_Z_MIN, KUKA_INIT_POS_Z_MAX = -0.3, 0.2
 
 # Base
 
-...
+KUKA_WSG50_BASE_POSITION = [-0.1, -0.5, -0.5]
+KUKA_WSG50_BASE_ORIENTATION = [0., 0., 0., 1.]
 
 # Default state
 VERTICAL_KUKA_ARM_JOINT_DEFAULT_VALUE = 0.
@@ -107,3 +108,30 @@ DEFAULT_JOINT_STATES = {j_id: VERTICAL_KUKA_ARM_JOINT_DEFAULT_VALUE for j_id in 
 
 
 
+
+# ---------------------------------------------- #
+#                    SCENE
+# ---------------------------------------------- #
+
+joint_id_base_left_finger = 8
+joint_id_base_right_finger = 11
+joint_id_base_left_tip_joint = 10
+joint_id_base_right_tip_joint = 13
+
+jointid_lowerlim_upperlim = [
+    (joint_id_base_left_finger, -0.5, -0.05),
+    (joint_id_base_right_finger, 0.05, 0.5),
+    (joint_id_base_left_tip_joint, -0.3, 0.1),
+    (joint_id_base_right_tip_joint, -0.1, 0.3)
+]
+KUKA_WSF50_CHANGE_DYNAMICS = {
+    **{id: {'lateralFriction': 1,
+            'jointLowerLimit': lowlim,
+            'jointUpperLimit': highlim,
+            'jointLimitForce': 10,
+            'jointDamping': 0.5,
+            'maxJointVelocity': 0.5} for id, lowlim, highlim in jointid_lowerlim_upperlim
+    },
+    **{i: {'maxJointVelocity': 0.5,
+           'jointLimitForce': 100 if i == 1 else 1 if i == 6 else 50} for i in range(7)}
+}
