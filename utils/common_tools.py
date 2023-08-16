@@ -98,3 +98,8 @@ def is_export_path_type_valid(dump_path, attempted_export_str='data'):
 def get_export_path_root(dump_path):
     assert type(dump_path) in consts.SUPPORTED_DUMP_PATH_TYPES
     return str(dump_path) if not isinstance(dump_path, str) else dump_path
+
+
+class MustBeOverloadedError(Exception):
+    pass
+

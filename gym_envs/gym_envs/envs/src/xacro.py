@@ -12,8 +12,7 @@ import xml.dom.minidom
 from io import StringIO
 
 from copy import deepcopy
-#from .cli import process_args
-#from color import error, message, warning
+import gym_envs.envs.src.env_constants as env_consts
 
 # colors ##########################
 # bold colors
@@ -281,11 +280,11 @@ def _find(resolved, a, args, context):
 #        raise SubstitutionException(
 #            '$(find pkg) accepts exactly one argument [%s]' % a)
 #    return resolved.replace('$(%s)' % a, _eval_find(args[0]))
-    folder = Path(gym_envs.__file__).resolve().parent/"envs/robots"
+    folder = Path(gym_envs.__file__).resolve().parent / env_consts.GYM_ENVS_RELATIVE_PATH2ROBOTS_MODELS
     try:
         folder = next(folder.glob("**/"+args[0]))
     except StopIteration:
-        raise Exception(f"{args[0]} has not been found anywhere in gym_envs/gym_envs/envs/robots/")
+        raise Exception(f"{args[0]} has not been found anywhere in {folder}")
     return folder
 
 

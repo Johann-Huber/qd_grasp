@@ -12,6 +12,7 @@ import pybullet_data
 from pybullet_utils.bullet_client import BulletClient
 import pybullet as p
 
+from utils.common_tools import MustBeOverloadedError
 from gym_envs.envs.src.utils import get_simulation_table_height
 import gym_envs.envs.src.env_constants as env_consts
 
@@ -1199,6 +1200,9 @@ class RobotGrasping(Env):
 
             else:
                 self._update_n_step_sim(n_steps=n_steps)
+
+    def _load_model(self):
+        raise MustBeOverloadedError()
 
     def _get_rest_poses(self):
         raise NotImplementedError('Must be overloaded in robot subclasses.')

@@ -32,12 +32,12 @@ pip3 install -e .
 
 Debug mode, to visualize each evaluation: 
 ```
-python3 apply_qd_grasp.py -a me_scs -r kuka_ik -o ycb_power_drill -nbr 2000 -d
+python3 apply_qd_grasp.py -a me_scs -r kuka_wsg50 -o ycb_power_drill -nbr 2000 -d
 ```
 
 Longer run:
 ```
-python3 -m scoop apply_qd_grasp.py -a me_scs -r kuka_ik -o ycb_power_drill -nbr 25000
+python3 -m scoop apply_qd_grasp.py -a me_scs -r kuka_wsg50 -o ycb_power_drill -nbr 25000
 ```
 
 
