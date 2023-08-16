@@ -6,6 +6,8 @@ import gym_envs.envs.src.robots.kuka_based.kuka_consts as ku_consts
 # ---------------------------------------------- #
 
 
+# Definition
+
 KUKA_ARM_JOINT_ID_STATUS = {
     0:  {'name': 'J0',          'status': 'CONTROLLED',         'is_controllable': True},
     1:  {'name': 'J1',          'status': 'CONTROLLED',         'is_controllable': True},
@@ -26,6 +28,38 @@ KUKA_CLAW_GRIP_JOINT_ID_STATUS = {
     13:   {'name': 'right_base_tip_joint',     'status': 'CONTROLLED',   'part': 'gripper',   'is_controllable': True},
     14:   {'name': 'end_effector_joint',       'status': 'FIXED',        'part': 'gripper',   'is_controllable': False},
 }
+
+
+# Key variables
+
+# --- General
+
+KUKA_WSF50_GRIP_ALL_JOINT_IDS = [j_id for j_id in KUKA_CLAW_GRIP_JOINT_ID_STATUS]
+
+# --- Controlled
+
+KUKA_ARM_CONTROLLED_JOINT_IDS = [
+    j_id for j_id in KUKA_ARM_JOINT_ID_STATUS
+    if KUKA_ARM_JOINT_ID_STATUS[j_id]['status'] == 'CONTROLLED'
+]
+
+WSG50_GRIP_CONTROLLED_JOINT_IDS = [
+    j_id for j_id in KUKA_CLAW_GRIP_JOINT_ID_STATUS
+    if KUKA_CLAW_GRIP_JOINT_ID_STATUS[j_id]['status'] == 'CONTROLLED'
+]
+
+# --- Controllable
+
+KUKA_ARM_CONTROLLABLE_JOINT_IDS = [
+    j_id for j_id in KUKA_ARM_JOINT_ID_STATUS
+    if KUKA_ARM_JOINT_ID_STATUS[j_id]['is_controllable']
+]
+
+WSG50_GRIP_CONTROLLABLE_JOINT_IDS = [
+    j_id for j_id in KUKA_CLAW_GRIP_JOINT_ID_STATUS
+    if KUKA_CLAW_GRIP_JOINT_ID_STATUS[j_id]['is_controllable']
+]
+
 
 
 
@@ -57,3 +91,19 @@ KUKA_ABOVE_OBJECT_INIT_POSITION = \
 KUKA_INIT_POS_X_MIN, KUKA_INIT_POS_X_MAX = -0.5, 0.5
 KUKA_INIT_POS_Y_MIN, KUKA_INIT_POS_Y_MAX = 0, 0.5
 KUKA_INIT_POS_Z_MIN, KUKA_INIT_POS_Z_MAX = -0.3, 0.2
+
+
+# ---------------------------------------------- #
+#                 INITIAL STATE
+# ---------------------------------------------- #
+
+# Base
+
+...
+
+# Default state
+VERTICAL_KUKA_ARM_JOINT_DEFAULT_VALUE = 0.
+DEFAULT_JOINT_STATES = {j_id: VERTICAL_KUKA_ARM_JOINT_DEFAULT_VALUE for j_id in KUKA_JOINT_IDS}
+
+
+

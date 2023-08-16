@@ -35,7 +35,7 @@ class KukaWsg50Grasping(RobotGrasping):
         end_effector_id = kw_consts.KUKA_END_EFFECTOR_ID
         center_workspace = kw_consts.KUKA_CENTER_WORKSPACE
 
-        ws_radius = kw_consts.KUKA_WS_RADIUS
+        ws_radius = ku_consts.KUKA_WS_RADIUS
 
         disabled_collision_pair = kw_consts.KUKA_DISABLED_COLLISION_PAIRS
 
@@ -83,7 +83,24 @@ class KukaWsg50Grasping(RobotGrasping):
             **kwargs,
         )
 
-        self.n_dof_arm = 7
+        self.n_dof_arm = len(kw_consts.KUKA_ARM_JOINT_ID_STATUS)
+
+
+    def step(self, action):
+
+        assert action is not None
+        assert len(action) == self.n_actions
+
+        # Update info
+        self.info['closed gripper'] = self._is_gripper_closed(action)
+
+        # Convert action to a gym-grasp compatible command
+        gripper_command = self._get_gripper_command(action)
+        arm_command = action[:-1]
+        robot_command = np.hstack([arm_command, gripper_command])
+
+        # Send the command to the robot
+        return super().step(robot_command)
 
     def _load_model(self):
         cwd = Path(gym_envs.__file__).resolve().parent / "envs"
@@ -92,66 +109,43 @@ class KukaWsg50Grasping(RobotGrasping):
         return robot_id
 
     def _is_gripper_closed(self, action):
-        # action = [joint_pos_1, ..., joint_pos_n, grip_pos_1, grip_pos_2, grip_pos_3, grip_pos_4]
-        # open grip : grip_pos = [-1, -1, 1, 1]
-        # closed grip : grip_pos = [1, 1, -1, -1]
-        #print('action=', action)
-        is_closed = action[-2] < 0
-        assert action[-4] == action[-3] == -action[-2] == -action[-1]
+        is_closed = action[-1] < 0
         return is_closed
 
-    def step(self, action):
+    def _get_gripper_command(self, action):
         # action = [cmd_each_joint, cmd_grip] -> cmd = [cmd_each_joint, -cmd_grip, -cmd_grip, cmd_grip, cmd_grip]
-        fingers_cmd = -action[-1], -action[-1], action[-1], action[-1]
-
-        # we want one action per joint (gripper is composed by 4 joints but considered as one)
-        assert len(action) == self.n_actions
-
-        griper_id = -1
-
-        self.info['closed gripper'] = action[griper_id] < 0
-
-        commands = np.hstack([action[:-1], *fingers_cmd])
-
-        # apply the commands
-        return super().step(commands)
+        fingers_cmd = [-action[-1], -action[-1], action[-1], action[-1]]
+        return fingers_cmd
 
     def _get_arm_controllable_joint_ids(self):
-        return [
-            j_id for j_id in kw_consts.KUKA_ARM_JOINT_ID_STATUS
-            if kw_consts.KUKA_ARM_JOINT_ID_STATUS[j_id]['is_controllable']
-        ]
+        return kw_consts.KUKA_ARM_CONTROLLABLE_JOINT_IDS
 
     def _get_gripper_controllable_joint_ids(self):
-        return [
-            j_id for j_id in kw_consts.KUKA_CLAW_GRIP_JOINT_ID_STATUS
-            if kw_consts.KUKA_CLAW_GRIP_JOINT_ID_STATUS[j_id]['is_controllable']
-        ]
+        return kw_consts.WSG50_GRIP_CONTROLLABLE_JOINT_IDS
 
-    def _get_n_dof_gripper(self):
-        return np.array(
-            [1 if kw_consts.KUKA_CLAW_GRIP_JOINT_ID_STATUS[j_id]['status'] == 'CONTROLLED' else 0
-             for j_id in kw_consts.KUKA_CLAW_GRIP_JOINT_ID_STATUS]
-        ).sum()
+    def _get_arm_controlled_joint_ids(self):
+        return kw_consts.KUKA_ARM_CONTROLLED_JOINT_IDS
 
-    def get_arm_controlled_joint_ids(self):
-        return [
-            j_id for j_id in kw_consts.KUKA_ARM_JOINT_ID_STATUS
-            if kw_consts.KUKA_ARM_JOINT_ID_STATUS[j_id]['status'] == 'CONTROLLED'
-        ]
+    def _get_gripper_controlled_joint_ids(self):
+        return kw_consts.WSG50_GRIP_CONTROLLED_JOINT_IDS
 
     def _get_controllable_joint_ids(self):
         # what joints the urdf allows us to control
         return self._get_arm_controllable_joint_ids() + self._get_gripper_controllable_joint_ids()
 
-    def get_fingers(self, x):
-        return np.array([-x, -x, x, x])
+    def _get_n_dof_gripper(self):
+        return len(self._get_gripper_controlled_joint_ids())
 
     def _get_rest_poses(self):
         return ku_consts.KUKA_ABOVE_OBJECT_INIT_POSITION_JOINTS
 
+    def _set_robot_default_state(self):
+        for j_id, j_val in kw_consts.DEFAULT_JOINT_STATES.items():
+            self.p.resetJointState(self.robot_id, j_id, targetValue=j_val)
+
     def _reset_robot(self):
-        for j_id in kw_consts.KUKA_JOINT_IDS:
-           self.p.resetJointState(self.robot_id, j_id, targetValue=0.)
+        self._set_robot_default_state()
+
+
 
 

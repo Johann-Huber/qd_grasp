@@ -961,11 +961,13 @@ class RobotGrasping(Env):
     def _reset_robot(self):
         pass  # Supposed to be overloaded in the inherited class
 
+    '''
     def get_fingers(self, x):
         """Return the value of the fingers to control all finger with -1≤x≤1.
         Gripper opened: x=1, gripper closed: x=-1"""
         # Supposed to be overloaded in the inherited class
         raise NotImplementedError(f'get_fingers() is not implemented in {self.__name__}.')
+    '''
 
     def render(self, mode='human'):
         if mode in {'rgb_array', 'rgba_array'}: # slow !
