@@ -96,7 +96,8 @@ class JointController(ControllerSpace):
         if i_step > self.nb_iter:
             raise RuntimeError(f'Too large i_step ({i_step} > len_episode={self.nb_iter})')
 
-        is_pos_locked = self.lock_end_eff_start_time <= i_step <= self.lock_end_eff_end_time
+        is_pos_locked = self.lock_end_eff_start_time <= i_step <= self.lock_end_eff_end_time \
+            if self.grip_time is not None else False
         # is_pos_locked = True # i_step > 2 #True # debug
 
         if is_pos_locked:
@@ -269,7 +270,9 @@ class InverseKinematicsController(ControllerSpace):
         if i_step > self.nb_iter:
             raise RuntimeError(f'Too large i_step ({i_step} > len_episode={self.nb_iter})')
 
-        is_pos_locked = self.lock_end_eff_start_time <= i_step <= self.lock_end_eff_end_time
+
+        is_pos_locked = self.lock_end_eff_start_time <= i_step <= self.lock_end_eff_end_time \
+            if self.grip_time is not None else False
         #is_pos_locked = True # i_step > 2 #True  # debug
 
         if is_pos_locked:

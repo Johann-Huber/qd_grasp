@@ -135,7 +135,7 @@ def get_controller_data(cfg):
 def init_env(cfg, display=False):
     env_kwargs = cfg['env']['kwargs']
     env_kwargs['initial_state'] = cfg['env']['initial_state']
-    print('init_state=', env_kwargs['initial_state'])
+    #print('init_state=', env_kwargs['initial_state'])
     env_kwargs['display'] = display
 
     return gym.make(**env_kwargs)

@@ -49,7 +49,7 @@ python3 visualization/replay_trajectories.py -r path_to_run_folder/
 ```
 Visualise the approach trajectories:
 ```
-...
+python3 visualization/plot_trajectories.py -r path_to_run_folder/
 ```
 Visualise the success archive as fitness heatmap:
 ```

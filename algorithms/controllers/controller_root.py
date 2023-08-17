@@ -24,9 +24,9 @@ class ControllerRoot(ABC):
 
         self.i_action_grip_close = None
 
-        self.grip_time = None
-        self.lock_end_eff_start_time = None
-        self.lock_end_eff_end_time = None
+        self.grip_time = None  # initialized when the object is touched to force closure
+        self.lock_end_eff_start_time = None  # initialized when the object is touched to force closure
+        self.lock_end_eff_end_time = None  # initialized when the object is touched to force closure
 
 
     def _clip_action(self, action):

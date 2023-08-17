@@ -58,8 +58,6 @@ def evaluate_grasp_ind(individual, env, eval_kwargs):
     tvfm = TouchVarFitMeasures()
     efm = EnergyFitMeasure()
 
-    controller.update_grip_time(grip_time=consts.INF_FLOAT_CONST)  # disable grasping before touching
-
     nrmlized_pos_arm = env.get_joint_state(normalized=True)
     nrmlized_pos_arm_prev = nrmlized_pos_arm
     reward_cumulated = 0

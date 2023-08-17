@@ -96,8 +96,10 @@ class SynergiesController(GripControllerMode):
         return gpl_value
 
     def _get_action_synergies_finger_poses(self, i_step):
-        assert self.grip_time is not None
-        target_closing_fingers = self.grip_action_open if i_step < self.grip_time else self.grip_action_close
+        if self.grip_time is not None:
+            target_closing_fingers = self.grip_action_open if i_step < self.grip_time else self.grip_action_close
+        else:
+            target_closing_fingers = self.grip_action_open
         target_pattern_fingers = self.grasp_primitive_label
         target_fingers_pos = [target_closing_fingers, target_pattern_fingers]
         return target_fingers_pos
