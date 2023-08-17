@@ -45,7 +45,7 @@ python3 -m scoop apply_qd_grasp.py -a me_scs -r kuka_wsg50 -o ycb_power_drill -n
 
 To replay successful trajectories from a completed run:
 ```
-python3 visualization/replay_trajectories_grasp_at_touch.py -r path_to_run_folder/
+python3 visualization/replay_trajectories.py -r path_to_run_folder/
 ```
 Visualise the approach trajectories:
 ```
