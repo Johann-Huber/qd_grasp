@@ -150,11 +150,9 @@ def evaluate_grasp_ind(individual, env, eval_kwargs):
     return get_evaluate_grasp_ind_outputs(
         interaction_measures=im,
         touch_var_fit_measure=tvfm,
-        is_there_grasp=is_there_grasp,
-        robot_has_touched_table=im.robot_has_touched_table,
         energy_fit_measure=efm,
+        is_there_grasp=is_there_grasp,
         reward_cumulated=reward_cumulated,
-        n_steps_before_grasp=im.n_steps_before_grasp,
         **eval_kwargs)
 
 
@@ -192,7 +190,7 @@ def exception_handler_evaluate_grasp_ind(individual, eval_kwargs):
 
 def get_evaluate_grasp_ind_outputs(
         interaction_measures, robot,
-        touch_var_fit_measure, energy_fit_measure, n_steps_before_grasp, robot_has_touched_table, is_there_grasp, reward_cumulated,
+        touch_var_fit_measure, energy_fit_measure, is_there_grasp, reward_cumulated,
         **kwargs # todo à transformer en mesure
 ):
     im = interaction_measures
@@ -201,6 +199,8 @@ def get_evaluate_grasp_ind_outputs(
     no_contact_table = kwargs['no_contact_table']
     prehension_criteria = kwargs['prehension_criteria']
     algo_variant = kwargs['algo_variant']
+    robot_has_touched_table = im.robot_has_touched_table,
+    n_steps_before_grasp = im.n_steps_before_grasp,
 
     # Sanity check
     is_success = False
