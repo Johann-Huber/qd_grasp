@@ -256,7 +256,11 @@ def is_pareto_efficient(costs, maximise=True):
     return is_efficient
 
 
-def get_normalized_multi_fitness(energy_fit, mono_eval_fit, robot_name):
+def get_normalized_multi_fitness(energy_fit, touch_var_fit, robot_name):
+
+    if touch_var_fit is None:
+        return None
+
     min_energy_fit_val, max_energy_fit_val = env_consts.ENERGY_FIT_NORM_BOUNDS_PER_ROB[robot_name]['min'], \
                                         env_consts.ENERGY_FIT_NORM_BOUNDS_PER_ROB[robot_name]['max']
 
@@ -265,10 +269,10 @@ def get_normalized_multi_fitness(energy_fit, mono_eval_fit, robot_name):
 
     min_touch_var_val = consts.FITNESS_TOUCH_VARIANCE_MIN
     max_touch_var_val = consts.FITNESS_TOUCH_VARIANCE_MAX
-    mono_eval_fit_val = np.clip(mono_eval_fit, a_min=min_touch_var_val, a_max=max_touch_var_val)
-    nrmlzd_mono_eval_fit_val = (mono_eval_fit_val - min_touch_var_val) / (max_touch_var_val - min_touch_var_val)
+    touch_var_fit_val = np.clip(touch_var_fit, a_min=min_touch_var_val, a_max=max_touch_var_val)
+    nrmlzd_touch_var_fit_val = (touch_var_fit_val - min_touch_var_val) / (max_touch_var_val - min_touch_var_val)
 
-    normalized_multi_fit = 0.5 * nrmlzd_energy_fit_val + 0.5 * nrmlzd_mono_eval_fit_val
+    normalized_multi_fit = 0.5 * nrmlzd_energy_fit_val + 0.5 * nrmlzd_touch_var_fit_val
     return normalized_multi_fit
 
 

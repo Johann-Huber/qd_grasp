@@ -158,6 +158,7 @@ N_DIGITS_AROUND_INDS_EVAL = 3
 N_ITER_STABILIZING_SIM = 0
 N_ITER_STABILIZING_SIM_DEFAULT_ROBOT_GRASP = 700 #2000 #10000
 
+N_RESET_SAFECHECK = 2  # how many time do we try to redeploy a successful trajectory to guarantee its reproducibility
 
 #----------------------------------------------------------------------------------------------------------------------#
 # CONTROLLER
@@ -272,8 +273,6 @@ RETURN_FAILURE_CODE = 1
 #----------------------------------------------------------------------------------------------------------------------#
 
 INF_FLOAT_CONST = float('inf')
-
-
 
 #----------------------------------------------------------------------------------------------------------------------#
 # BULLET ENV HYPERPARAMETERS

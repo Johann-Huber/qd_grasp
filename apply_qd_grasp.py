@@ -16,17 +16,14 @@ ENV, EVAL_KWARGS, MULTICORE_SHARED_CFG = initialize_cpu_multicore_data()
 QD_ALGO_ARGS = get_qd_algo_args(cfg=MULTICORE_SHARED_CFG)
 
 
-def evaluate_grasp_ind_routine(individual, eval_kwargs, n_reset_safecheck=2):
+def evaluate_grasp_ind_routine(individual, eval_kwargs):
 
     raise_exceptions_flg = True
     try:
         behavior, fitness, info = evaluate_grasp_ind(
             individual=individual,
             env=ENV,
-            robot=MULTICORE_SHARED_CFG['robot']['name'],
-            eval_kwargs=eval_kwargs,
-            n_reset_safecheck=n_reset_safecheck
-
+            eval_kwargs=eval_kwargs
         )
     except Exception as e:
         # Might be raised in some pathological cases due to simulator issues

@@ -77,20 +77,21 @@ def get_controller_info(robot_kwargs, env_kwargs, algo_variant):
     return controller_info
 
 
-
 def get_eval_kwargs(parsed_args, robot_kwargs, evo_process, bd_bounds, bd_flg, env_kwargs, prehension_criteria,
-                    algo_variant):
+                    algo_variant, robot):
 
     add_iter = int(1*240/robot_kwargs['nb_steps_to_rollout'])
     nb_iter = robot_kwargs['nb_iter']
     bd_bounds = bd_bounds
+    bd_len = len(bd_bounds)
     nb_steps_to_rollout = robot_kwargs['nb_steps_to_rollout']
     n_it_closing_grip = robot_kwargs['n_it_closing_grip']
+    n_reset_safecheck = consts.N_RESET_SAFECHECK
+
     no_contact_table = parsed_args.contact_table
 
     controller_class = get_controller_class(robot_kwargs)
     controller_info = get_controller_info(robot_kwargs=robot_kwargs, env_kwargs=env_kwargs, algo_variant=algo_variant)
-
 
     eval_kwargs = {
         'evo_process': evo_process,
@@ -99,12 +100,15 @@ def get_eval_kwargs(parsed_args, robot_kwargs, evo_process, bd_bounds, bd_flg, e
         'add_iter': add_iter,
         'nb_iter': nb_iter,
         'bd_bounds': bd_bounds,
+        'bd_len': bd_len,
         'nb_steps_to_rollout': nb_steps_to_rollout,
         'n_it_closing_grip': n_it_closing_grip,
         'no_contact_table': no_contact_table,
         'controller_class': controller_class,
         'controller_info': controller_info,
         'algo_variant': algo_variant,
+        'robot': robot,
+        'n_reset_safecheck': n_reset_safecheck,
     }
     return eval_kwargs
 
@@ -372,7 +376,8 @@ def initialize_cpu_multicore_data():
                                   bd_bounds=BD_BOUNDS,
                                   env_kwargs=ENV_KWARGS,
                                   prehension_criteria=PREHENSION_CRITERIA,
-                                  algo_variant=ALGO_VARIANT)
+                                  algo_variant=ALGO_VARIANT,
+                                  robot=ROBOT)
 
     # assert EVO_PROCESS in consts.MULTI_BD_EVO_PROCESSES
     if EVO_PROCESS in consts.MULTI_BD_EVO_PROCESSES:

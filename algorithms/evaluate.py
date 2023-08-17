@@ -12,141 +12,122 @@ import pdb
 import time
 import algorithms.controllers.controller_params as ctrl_params
 
+from dataclasses import dataclass, field
 
-def evaluate_grasp_ind(individual, env, robot, eval_kwargs, n_reset_safecheck):
 
-    evo_process = eval_kwargs['evo_process']
-    bd_flg = eval_kwargs['bd_flg']
-    add_iter = eval_kwargs['add_iter']
-    nb_iter = eval_kwargs['nb_iter']
-    bd_bounds = eval_kwargs['bd_bounds']
-    #nb_steps_to_rollout = eval_kwargs['nb_steps_to_rollout']
-    no_contact_table = eval_kwargs['no_contact_table']
-    controller_class = eval_kwargs['controller_class']
-    controller_info = eval_kwargs['controller_info']
-    n_it_closing_grip = eval_kwargs['n_it_closing_grip']
-    prehension_criteria = eval_kwargs['prehension_criteria']
-    algo_variant = eval_kwargs['algo_variant']
-    pdb.set_trace()
+@dataclass
+class InteractionMeasures:
+    is_already_grasped: bool = False
+    robot_has_touched_table: bool = False
+    i_start_closing: int = None
+    pos_touch_time: bool = None
+    is_already_touched: bool = False
+    n_steps_before_grasp: int = consts.INF_FLOAT_CONST
+    t_touch_t_close_diff: float = consts.INF_FLOAT_CONST
+    curr_contact_object_table: list = field(default_factory=list)
+
+
+@dataclass
+class TouchVarFitMeasures:
+    all_touch_on_obj: list = field(default_factory=list)
+    all_touch_on_robot: list = field(default_factory=list)
+    is_discontinuous_touch: bool = False
+    n_steps_continuous_touch: int = 0
+    n_steps_discontinuous_touch: int = 0
+    max_observed_n_touch: int = 0
+
+
+@dataclass
+class EnergyFitMeasure:
+    energy_consumption_cumulated: int = 0
+
+
+def evaluate_grasp_ind(individual, env, eval_kwargs):
+
+    episode_length = eval_kwargs['nb_iter']
     env.reset(load='state' if consts.RESET_MODE else 'all')
 
     controller = init_controller(
         individual=individual,
-        controller_class=controller_class,
-        controller_info=controller_info,
+        controller_class=eval_kwargs['controller_class'],
+        controller_info=eval_kwargs['controller_info'],
         env=env
     )
 
-    is_already_touched = False
-    is_already_grasped = False
-    robot_has_touched_table = False
-    i_start_closing = None
-    half_state_measured = False
-    or_touch_time = None
-    pos_touch_time = None
-    half_time = nb_iter / 4
-    bd_len = len(bd_bounds)
-    init_obj_pos = env.info['object position']
-    n_steps_before_grasp = consts.INF_FLOAT_CONST
-
-    grip_info = {"contact object table": [], "diff(t_close, t_touch)": consts.INF_FLOAT_CONST}
-    info_out = {'is_valid': None, 'energy': 0, 'n_steps_before_grasp': n_steps_before_grasp, 'reward': 0,
-                'normalized_multi_fit': 0., 'touch_var': None,
-                'is_obj_touched': False,
-                }
-    all_touch_on_obj, all_touch_on_robot = [], []
-    is_discontinuous_touch, n_steps_continuous_touch, n_steps_discontinuous_touch = False, 0, 0
-    max_observed_n_touch = 0
-
-    all_pos_obj_before_grasp, all_orient_obj_before_grasp = [], []
+    im = InteractionMeasures()
+    tvfm = TouchVarFitMeasures()
+    efm = EnergyFitMeasure()
 
     controller.update_grip_time(grip_time=consts.INF_FLOAT_CONST)  # disable grasping before touching
 
     nrmlized_pos_arm = env.get_joint_state(normalized=True)
     nrmlized_pos_arm_prev = nrmlized_pos_arm
-
+    reward_cumulated = 0
     i_step = 0
 
-    while i_step < nb_iter:
+    while i_step < episode_length:
         action = controller.get_action(i_step=i_step, nrmlized_pos_arm=nrmlized_pos_arm, env=env)
 
-        _, reward, done, info = env.step(action)
+        _, reward, _, info = env.step(action)
 
         nrmlized_pos_arm = env.get_joint_state(normalized=True)
 
-        if done:
-            pdb.set_trace()
-            break
+        if i_step >= controller.grip_time and not im.is_already_grasped:
+            im.is_already_grasped = True
+            im.curr_contact_object_table = info["contact object table"]
+            im.i_start_closing = i_step  # the object should be grasped after having closed the gripper
 
-        if i_step >= controller.grip_time and not is_already_grasped:
-            is_already_grasped = True
-            grip_info["contact object table"] = info["contact object table"]
-            i_start_closing = i_step  # the object should be grasped after having closed the gripper
-
-        if not is_already_grasped:
-            curr_obj_pos, curr_obj_orient = env.p.getBasePositionAndOrientation(env.obj_id)
-            all_pos_obj_before_grasp.append(curr_obj_pos)
-            all_orient_obj_before_grasp.append(curr_obj_orient)
-
-        if info['touch'] and not is_already_touched:
-            # first touch of object
-            or_touch_time = info['end effector xyzw']
-            pos_touch_time = info['end effector position']
-
-            is_already_touched = True
+        if info['touch'] and not im.is_already_touched:
+            # First touch of object
+            im.pos_touch_time = info['end effector position']
+            im.is_already_touched = True
 
             # Close grip at first touch
             controller.update_grip_time(grip_time=i_step)
             controller.last_i = i_step
             nrmlized_pos_arm = nrmlized_pos_arm_prev
 
-        if info['touch'] and i_start_closing is not None:
-            grip_info["diff(t_close, t_touch)"] = i_step - i_start_closing
-            i_start_closing = None
-
-        if i_step >= half_time and not half_state_measured:
-            grip_or_half = np.array(info['end effector xyzw'])
-            grip_pos_half = np.array(info['end effector position'])
-            half_state_measured = True
+        if info['touch'] and im.i_start_closing is not None:
+            im.t_touch_t_close_diff = i_step - im.i_start_closing
+            im.i_start_closing = None
 
         if consts.AUTO_COLLIDE and info['autocollision']:
             return get_autocollide_outputs(
-                evo_process=evo_process,
-                bd_len=bd_len,
-                algo_variant=algo_variant,
-                robot=robot,
-                is_already_touched=is_already_touched
+                reward_cumulated=reward_cumulated,
+                is_already_touched=im.is_already_touched,
+                **eval_kwargs
             )
 
-        if is_already_touched and not is_discontinuous_touch:
+        if im.is_already_touched and not tvfm.is_discontinuous_touch:
             touch_points_on_obj = info['touch_points_obj']
             touch_points_on_robot = info['touch_points_robot']
-            is_less_touching_obj = len(touch_points_on_obj) < max_observed_n_touch or \
-                                   len(touch_points_on_robot) < max_observed_n_touch
-            if is_less_touching_obj:
-                is_discontinuous_touch = True
+            is_discontinuous_touch_detected = \
+                len(touch_points_on_obj) < tvfm.max_observed_n_touch or \
+                len(touch_points_on_robot) < tvfm.max_observed_n_touch
+            if is_discontinuous_touch_detected:
+                tvfm.is_discontinuous_touch = True
             else:
-                n_steps_continuous_touch += 1
-                max_observed_n_touch = max(max_observed_n_touch,
-                                           len(touch_points_on_obj))
-                all_touch_on_obj.append(touch_points_on_obj)
-                all_touch_on_robot.append(touch_points_on_robot)
+                tvfm.n_steps_continuous_touch += 1
+                tvfm.max_observed_n_touch = \
+                    max(tvfm.max_observed_n_touch, len(touch_points_on_obj))
+                tvfm.all_touch_on_obj.append(touch_points_on_obj)
+                tvfm.all_touch_on_robot.append(touch_points_on_robot)
 
-        if is_discontinuous_touch:
-            n_steps_discontinuous_touch += 1
+        if tvfm.is_discontinuous_touch:
+            tvfm.n_steps_discontinuous_touch += 1
 
-        info_out['reward'] += reward
-        info_out['energy'] += np.abs(info['applied joint motor torques']).sum()
+        reward_cumulated += reward
+        efm.energy_consumption_cumulated += np.abs(info['applied joint motor torques']).sum()
+
         is_robot_touching_table = len(info['contact robot table']) > 0
-        robot_has_touched_table = robot_has_touched_table or is_robot_touching_table
+        im.robot_has_touched_table = im.robot_has_touched_table or is_robot_touching_table
 
-        grasped_while_closing = grip_info[
-                                    'diff(t_close, t_touch)'] < n_it_closing_grip * consts.GRASP_WHILE_CLOSE_TOLERANCE
-        obj_not_touching_table = len(grip_info['contact object table']) > 0
+        grasped_while_closing = im.t_touch_t_close_diff < eval_kwargs['n_it_closing_grip'] * consts.GRASP_WHILE_CLOSE_TOLERANCE
+        obj_not_touching_table = len(im.curr_contact_object_table) > 0
         is_there_grasp = reward and grasped_while_closing and obj_not_touching_table
-        is_first_grasp = is_there_grasp and n_steps_before_grasp == consts.INF_FLOAT_CONST
+        is_first_grasp = is_there_grasp and im.n_steps_before_grasp == consts.INF_FLOAT_CONST
         if is_first_grasp:
-            n_steps_before_grasp = i_step
+            im.n_steps_before_grasp = i_step
 
         if env.display:
             time.sleep(consts.TIME_SLEEP_SMOOTH_DISPLAY_IN_SEC)
@@ -156,132 +137,166 @@ def evaluate_grasp_ind(individual, env, robot, eval_kwargs, n_reset_safecheck):
         i_step += 1
 
     # use last info to compute behavior and fitness
-    grasped_while_closing = grip_info['diff(t_close, t_touch)'] < n_it_closing_grip * consts.GRASP_WHILE_CLOSE_TOLERANCE
-    obj_not_touching_table = len(grip_info['contact object table']) > 0
+    grasped_while_closing = im.t_touch_t_close_diff < eval_kwargs['n_it_closing_grip'] * consts.GRASP_WHILE_CLOSE_TOLERANCE
+    obj_not_touching_table = len(im.curr_contact_object_table) > 0
     is_there_grasp = reward and grasped_while_closing and obj_not_touching_table
 
     if is_there_grasp:
         is_there_grasp = do_safechecks_traj_success(
-            env=env, add_iter=add_iter, controller=controller, nb_iter=nb_iter, n_reset_safecheck=n_reset_safecheck,
-            robot=robot
+            env=env, controller=controller,
+            **eval_kwargs
         )
 
-    info_out['is_success'] = False
-    if is_there_grasp:
-        if or_touch_time is None:
-            is_success = False
-            info_out['is_success'] = False
-            pos_touch_time = None
-        else:
-            if no_contact_table and robot_has_touched_table:
-                is_success = False
-                or_touch_time = None
-            else:
-                is_success = True
-                info_out['is_success'] = True
-    else:
-        is_success = False
-        or_touch_time = None
-
-    info_out['is_success'] = is_success
-    info_out['is_valid'] = True
-    info_out['energy'] = (-1) * info_out['energy']  # minimize energy => maximise energy_fit = (-1) * energy
-
-    if not is_already_touched:
-        grip_or_half = None
-
-    last_obj_pos = info['object position']
-
-    behavior = build_behavior_vector(
-        bd_flg=bd_flg,
-        evo_process=evo_process,
-        grip_pos_half=grip_pos_half,
-        grip_or_half=grip_or_half,
-        pos_touch_time=pos_touch_time,
-        or_touch_time=or_touch_time,
-        init_obj_pos=init_obj_pos,
-        last_obj_pos=last_obj_pos,
-        bd_bounds=bd_bounds
-    )
-
-    dummy_fitness = float(is_success)
-
-    if is_success:
-        info_out['touch_var'] = do_touch_variance_computation(
-            all_touch_on_obj=all_touch_on_obj,
-            all_touch_on_robot=all_touch_on_robot,
-            n_steps_continuous_touch=n_steps_continuous_touch,
-            max_observed_n_touch=max_observed_n_touch,
-            n_steps_discontinuous_touch=n_steps_discontinuous_touch,
-        ) if 'touch_var' in prehension_criteria else None
-    else:
-        info_out['touch_var'] = -consts.INF_FLOAT_CONST if 'touch_var' in prehension_criteria else None
-
-    mono_eval_fit = info_out['touch_var']
-
-    info_out['normalized_multi_fit'] = get_normalized_multi_fitness(
-        energy_fit=info_out['energy'], mono_eval_fit=mono_eval_fit, robot_name=robot
-    )
-    info_out['is_obj_touched'] = is_already_touched
-
-    if evo_process in consts.EVO_PROCESS_WITH_LOCAL_COMPETITION:
-        dummy_fitness = (dummy_fitness, dummy_fitness)
-    elif algo_variant in consts.ARCHIVE_BASED_NOVELTY_FITNESS_SELECTION_ALGO_VARIANTS:
-        dummy_fitness = (dummy_fitness, dummy_fitness)
-    else:
-        dummy_fitness = (dummy_fitness,)
-
-    return behavior.tolist(), dummy_fitness, info_out
+    return get_evaluate_grasp_ind_outputs(
+        interaction_measures=im,
+        touch_var_fit_measure=tvfm,
+        is_there_grasp=is_there_grasp,
+        robot_has_touched_table=im.robot_has_touched_table,
+        energy_fit_measure=efm,
+        reward_cumulated=reward_cumulated,
+        n_steps_before_grasp=im.n_steps_before_grasp,
+        **eval_kwargs)
 
 
 def exception_handler_evaluate_grasp_ind(individual, eval_kwargs):
 
     evo_process = eval_kwargs['evo_process']
     prehension_criteria = eval_kwargs['prehension_criteria']
-
-    # to do : plug it to an error logger
+    algo_variant = eval_kwargs['algo_variant']
+    bd_len = eval_kwargs['bd_len']
 
     print(f'DANGER : pathological case raised in eval. ind={individual}')
-    n_expected_bds = (3 * 3 + 4 * 2)
-    dummy_behavior_failure = n_expected_bds * [None]
 
-    if evo_process in consts.EVO_PROCESS_WITH_LOCAL_COMPETITION:
-        dummy_fitness_failure = (False, False)
-    else:
-        dummy_fitness_failure = (False,)
+    # Build behavior
+    dummy_behavior_failure = bd_len * [None]
 
+    # Build fitness
+    dummy_fitness_failure = build_deap_compatible_fitness(
+        scalar_fit=None,
+        evo_process=evo_process,
+        algo_variant=algo_variant
+    )
+
+    # Build info_out
     dummy_info_out_failure = {
         'is_success': False,
         'is_valid': None,
         'energy': 0,
         'n_steps_before_grasp': consts.INF_FLOAT_CONST,
-        'reward': 0,
+        'reward_cumulated': 0,
         'normalized_multi_fit': 0.,
         'touch_var': -consts.INF_FLOAT_CONST if 'touch_var' in prehension_criteria else None,
     }
     return dummy_behavior_failure, dummy_fitness_failure, dummy_info_out_failure
 
 
-def get_autocollide_outputs(evo_process, bd_len, algo_variant, robot, is_already_touched, verbose=True):
+def get_evaluate_grasp_ind_outputs(
+        interaction_measures, robot,
+        touch_var_fit_measure, energy_fit_measure, n_steps_before_grasp, robot_has_touched_table, is_there_grasp, reward_cumulated,
+        **kwargs # todo à transformer en mesure
+):
+    im = interaction_measures
+    is_already_touched = im.is_already_touched
+    evo_process = kwargs['evo_process']
+    no_contact_table = kwargs['no_contact_table']
+    prehension_criteria = kwargs['prehension_criteria']
+    algo_variant = kwargs['algo_variant']
+
+    # Sanity check
+    is_success = False
+    is_valid = True
+    if is_there_grasp:
+        if not im.is_already_touched:
+            is_success = False
+            is_valid = False
+            assert im.pos_touch_time is None
+        else:
+            if no_contact_table and robot_has_touched_table:
+                is_success = False
+                is_valid = False
+            else:
+                is_success = True
+                is_valid = True
+
+    # Fitness postprocessing
+    touch_var_fit = get_touch_var_fit(
+        is_success=is_success,
+        touch_var_fit_measure=touch_var_fit_measure,
+        prehension_criteria=prehension_criteria
+    )
+
+    energy_fit = get_energy_fit(energy_fit_measure)
+
+    normalized_multi_fit = get_normalized_multi_fitness(
+        energy_fit=energy_fit, touch_var_fit=touch_var_fit, robot_name=robot
+    )
+
+    # Build behavior
+    behavior = build_behavior_vector(
+        interaction_measures=im,
+        **kwargs
+    )
+
+    # Build fitness
+    binary_success_fitness = float(is_success)
+    fitness = build_deap_compatible_fitness(
+        scalar_fit=binary_success_fitness,
+        evo_process=evo_process,
+        algo_variant=algo_variant
+    )
+
+    # Build info_out
+    info_out = {
+        'is_valid': is_valid,
+        'is_success': is_success,
+        'auto_collided': False,
+        'energy': energy_fit,
+        'is_obj_touched': is_already_touched,
+        'normalized_multi_fit': normalized_multi_fit,
+        'touch_var': touch_var_fit,
+        'reward_cumulated': reward_cumulated,
+        'n_steps_before_grasp': n_steps_before_grasp
+    }
+
+    return behavior, fitness, info_out
+
+
+def get_touch_var_fit(is_success, touch_var_fit_measure, prehension_criteria):
+    if is_success:
+        touch_var_fit = do_touch_variance_computation(
+            touch_var_fit_measure=touch_var_fit_measure,
+        ) if 'touch_var' in prehension_criteria else None
+    else:
+        touch_var_fit = -consts.INF_FLOAT_CONST if 'touch_var' in prehension_criteria else None
+    return touch_var_fit
+
+
+def get_energy_fit(energy_fit_measure):
+    # minimize energy => maximise energy_fit = (-1) * energy_consumption_cumulated
+    return (-1) * energy_fit_measure.energy_consumption_cumulated
+
+
+def get_autocollide_outputs(evo_process, bd_len, algo_variant, robot, is_already_touched, reward_cumulated, verbose=True, **kwargs):
 
     if verbose:
         print('AUTOCOLLIDE !' + 20 * '=')
 
     worst_energy = env_consts.ENERGY_FIT_NORM_BOUNDS_PER_ROB[robot]['min']
-    worst_fitness = -consts.INF_FLOAT_CONST
+
     worst_touch_var = -consts.INF_FLOAT_CONST
     worst_normalized_multi_fit = 0.
+    worst_n_steps_before_grasp = consts.INF_FLOAT_CONST
 
     # Build behavior descriptor
     behavior = build_invalid_behavior_vector(evo_process=evo_process, bd_len=bd_len)
 
     # Build fitness
-    if evo_process in consts.EVO_PROCESS_WITH_LOCAL_COMPETITION:
-        dummy_fitness = (worst_fitness, worst_fitness)
-    elif algo_variant in consts.ARCHIVE_BASED_NOVELTY_FITNESS_SELECTION_ALGO_VARIANTS:
-        dummy_fitness = (worst_fitness, worst_fitness)
-    else:
-        dummy_fitness = (worst_fitness,)
+    worst_fitness = -consts.INF_FLOAT_CONST
+    fitness = build_deap_compatible_fitness(
+        scalar_fit=worst_fitness,
+        evo_process=evo_process,
+        algo_variant=algo_variant
+    )
 
     # Build info_out
     info_out = {
@@ -292,9 +307,24 @@ def get_autocollide_outputs(evo_process, bd_len, algo_variant, robot, is_already
         'is_obj_touched': is_already_touched,
         'normalized_multi_fit': worst_normalized_multi_fit,
         'touch_var': worst_touch_var,
+        'reward_cumulated': reward_cumulated,
+        'n_steps_before_grasp': worst_n_steps_before_grasp
     }
 
-    return behavior, dummy_fitness, info_out
+    return behavior, fitness, info_out
+
+
+def build_deap_compatible_fitness(scalar_fit, evo_process, algo_variant):
+
+    if evo_process in consts.EVO_PROCESS_WITH_LOCAL_COMPETITION:
+        # NSLC: fit = (nov, local_quality) -> makes NSGA-II selection easily applicable
+        return (scalar_fit, scalar_fit)
+    elif algo_variant in consts.ARCHIVE_BASED_NOVELTY_FITNESS_SELECTION_ALGO_VARIANTS:
+        # ME-nov-fit : fit = (nov, fit) -> makes NSGA-II selection easily applicable
+        return (scalar_fit, scalar_fit)
+    else:
+        # DEAP is expected tuple, even with a single value
+        return (scalar_fit,)
 
 
 def around_inds(inds):
@@ -330,71 +360,18 @@ def fillna_behavior(behavior, evo_process):
     return behavior
 
 
-def build_behavior_vector(bd_flg, evo_process, grip_pos_half, grip_or_half, pos_touch_time, or_touch_time, init_obj_pos,
-                          last_obj_pos, bd_bounds):
-
-    bd_len = len(bd_bounds)
+def build_behavior_vector(bd_flg, evo_process, interaction_measures, bd_len, **kwargs):
+    im = interaction_measures
     behavior = np.array([None] * bd_len, dtype=object)
+    pos_touch_time = im.pos_touch_time
 
     if bd_flg == 'pos_touch':
         behavior[:] = pos_touch_time
         behavior = fillna_behavior(behavior=behavior, evo_process=evo_process)
-        return behavior
-
-    if bd_flg == 'last_pos_obj_pos_touch':
-        last_obj_pos_offset = [
-            last_obj_pos[0] - init_obj_pos[0],
-            last_obj_pos[1] - init_obj_pos[1],
-            last_obj_pos[2]
-        ]
-        behavior[:3] = last_obj_pos_offset
-        uct.bound(behavior[:3], bd_bounds[:3])
-
-        behavior[3:6] = pos_touch_time
-        behavior = fillna_behavior(behavior=behavior, evo_process=evo_process)
-        return behavior
-
-    if bd_flg == 'last_pos_obj_pos_touch_pos_half':
-        last_obj_pos_offset = [
-            last_obj_pos[0] - init_obj_pos[0],
-            last_obj_pos[1] - init_obj_pos[1],
-            last_obj_pos[2]
-        ]
-        behavior[:3] = last_obj_pos_offset
-        uct.bound(behavior[:3], bd_bounds[:3])
-
-        behavior[3:6] = pos_touch_time
-        behavior[6:9] = grip_pos_half
-
-        behavior = fillna_behavior(behavior=behavior, evo_process=evo_process)
-        return behavior
-
-    behavior[:3] = [last_obj_pos[0] - init_obj_pos[0],
-                    last_obj_pos[1] - init_obj_pos[1],
-                    last_obj_pos[2]]
-
-    uct.bound(behavior[:3], bd_bounds[:3])
-
-    if or_touch_time is not None:
-        or_touch_time = or_touch_time.elements  # Quaternion to numpy array
-
-    behavior[3:7] = or_touch_time  # this one is common to the 3
-    behavior[7:10] = pos_touch_time
-
-    if bd_flg == 'nsmbs':
-        behavior[10:] = grip_or_half
-    elif bd_flg == 'all_bd':
-        behavior[10:14] = grip_or_half
-        behavior[14:] = grip_pos_half
-    elif bd_flg == 'bd_safe_real':
-        behavior[10:14] = or_touch_time
-        behavior[14:] = pos_touch_time
+        return behavior.tolist()
     else:
         raise RuntimeError(f'Unknown bd_flg: {bd_flg}')
 
-    behavior = fillna_behavior(behavior=behavior, evo_process=evo_process)
-
-    return behavior
 
 
 def do_env_stabilization_check(env, add_iter, controller):
@@ -443,7 +420,7 @@ def do_traj_redeploiment_safecheck(
     return is_there_grasp
 
 
-def do_safechecks_traj_success(robot, env, add_iter, controller, nb_iter, n_reset_safecheck):
+def do_safechecks_traj_success(robot, env, add_iter, controller, nb_iter, n_reset_safecheck, **kwargs):
     is_stable_grasp = do_env_stabilization_check(env=env, add_iter=add_iter, controller=controller)
     if not is_stable_grasp:
         return False
@@ -458,11 +435,15 @@ def do_safechecks_traj_success(robot, env, add_iter, controller, nb_iter, n_rese
     return is_grasp_reproducible
 
 
-def do_touch_variance_computation(
-        all_touch_on_obj, all_touch_on_robot, n_steps_continuous_touch, max_observed_n_touch,
-        n_steps_discontinuous_touch
-):
-    #pdb.set_trace()
+def do_touch_variance_computation(touch_var_fit_measure):
+
+    tvfm = touch_var_fit_measure
+
+    all_touch_on_obj = tvfm.all_touch_on_obj
+    all_touch_on_robot = tvfm.all_touch_on_robot
+    n_steps_continuous_touch = tvfm.n_steps_continuous_touch
+    max_observed_n_touch = tvfm.max_observed_n_touch
+    n_steps_discontinuous_touch = tvfm.n_steps_discontinuous_touch
 
     entry_points_obj = {}
     for i_entry_point in range(max_observed_n_touch):
