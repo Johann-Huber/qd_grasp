@@ -44,9 +44,10 @@ class StandardController(GripControllerMode):
         assert self.i_action_grip_close in [-1, -2]
 
     def _get_action_standard_finger_poses(self, i_step):
-        # constant closure
-        assert self.grip_time is not None
-        return self.grip_action_open if i_step < self.grip_time else self.grip_action_close
+        if self.grip_time is not None:
+            return self.grip_action_open if i_step < self.grip_time else self.grip_action_close
+        else:
+            return self.grip_action_open
 
     def get_grip_control_mode(self):
         return ctrl_params.GripControlMode.STANDARD

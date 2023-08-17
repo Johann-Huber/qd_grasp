@@ -32,12 +32,12 @@ pip3 install -e .
 
 Debug mode, to visualize each evaluation: 
 ```
-python3 apply_qd_grasp.py -a me_scs -r kuka_wsg50 -o ycb_power_drill -nbr 2000 -d
+python3 run_qd_grasp.py -a me_scs -r kuka_wsg50 -o ycb_power_drill -nbr 2000 -d
 ```
 
 Longer run:
 ```
-python3 -m scoop apply_qd_grasp.py -a me_scs -r kuka_wsg50 -o ycb_power_drill -nbr 25000
+python3 -m scoop run_qd_grasp.py -a me_scs -r kuka_wsg50 -o ycb_power_drill -nbr 25000
 ```
 
 
@@ -53,7 +53,7 @@ python3 visualization/plot_trajectories.py -r path_to_run_folder/
 ```
 Visualise the success archive as fitness heatmap:
 ```
-...
+python3 visualization/plot_success_archive_heatmap.py -r path_to_run_folder/
 ```
 
 

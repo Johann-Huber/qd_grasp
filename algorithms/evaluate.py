@@ -70,10 +70,11 @@ def evaluate_grasp_ind(individual, env, eval_kwargs):
 
         nrmlized_pos_arm = env.get_joint_state(normalized=True)
 
-        if i_step >= controller.grip_time and not im.is_already_grasped:
-            im.is_already_grasped = True
-            im.curr_contact_object_table = info["contact object table"]
-            im.i_start_closing = i_step  # the object should be grasped after having closed the gripper
+        if controller.grip_time is not None:
+            if i_step >= controller.grip_time and not im.is_already_grasped:
+                im.is_already_grasped = True
+                im.curr_contact_object_table = info["contact object table"]
+                im.i_start_closing = i_step  # the object should be grasped after having closed the gripper
 
         if info['touch'] and not im.is_already_touched:
             # First touch of object
