@@ -32,7 +32,7 @@ class RobotGrasping(Env):
             ):
 
         self.bullet_client = None  # bullet physics client
-        self.physicsClientId = None  # bullet physics client id
+        self.physics_client_id = None  # bullet physics client id
         self._run_name = None  # export path for local bullet save
         self.sim_render = None  # manage simulation rendering
         self.sim_engine = None  # manage simulation engine
