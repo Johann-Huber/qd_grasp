@@ -93,7 +93,7 @@ class KukaAllegroGrasping(RobotGrasping):
         if not urdf.is_file():
             generate_urdf_from_xacro(root_3d_models_robots=root_3d_models_robots, urdf=urdf)
 
-        kuka_allegro_id = self.p.loadURDF(
+        kuka_allegro_id = self.bullet_client.loadURDF(
             str(urdf),
             basePosition=ka_consts.KUKA_ALLEGRO_BASE_POSITION,
             baseOrientation=ka_consts.KUKA_ALLEGRO_BASE_ORIENTATION,
@@ -165,11 +165,11 @@ class KukaAllegroGrasping(RobotGrasping):
 
     def _set_robot_default_state(self):
         for j_id, j_val in ka_consts.DEFAULT_JOINT_STATES.items():
-            self.p.resetJointState(self.robot_id, j_id, targetValue=j_val)
+            self.bullet_client.resetJointState(self.robot_id, j_id, targetValue=j_val)
 
     def _set_robot_manually_fixed_joint_states(self):
         for j_id, j_val in ka_consts.MANUALLY_PRESET_VALUES.items():
-            self.p.resetJointState(self.robot_id, j_id, targetValue=j_val)
+            self.bullet_client.resetJointState(self.robot_id, j_id, targetValue=j_val)
 
     def _reset_robot(self):
         self._set_robot_default_state()
