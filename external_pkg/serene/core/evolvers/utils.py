@@ -6,7 +6,7 @@ import numpy as np
 import math
 from scipy.spatial.distance import squareform, cdist
 import matplotlib.pyplot as plt
-plt.style.use('seaborn')
+
 
 
 

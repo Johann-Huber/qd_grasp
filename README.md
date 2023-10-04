@@ -13,7 +13,7 @@ Visit the project webpage for more details: (*available soon*)
 * Kuka iiwa + Allegro hand (*kuka_allegro*) 
 * Baxter + 2-fingers gripper (*baxter_2f*)
 * Franka Emika Panda + 2-fingers gripper (*panda_2f*)
-* UR5 + SIH Schunk hand (*panda_2f*)
+* UR5 + SIH Schunk hand (*ur5_sih_schunk*)
 
 Interested in applying QD methods to your robot? Please consider opening an issue or making a pull request to extend the set of supported platforms.
 
