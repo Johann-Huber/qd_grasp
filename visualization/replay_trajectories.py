@@ -25,7 +25,7 @@ SMOOTH_VIS_TIME_SLEEP_IN_SEC = 0.02
 
 
 def set_camera_replay_trajs(env):
-	env.p.resetDebugVisualizerCamera(
+	env.bullet_client.resetDebugVisualizerCamera(
 		cameraDistance=0.9, cameraYaw=0, cameraPitch=200, cameraTargetPosition=[0, 0, 0.1]
 	)
 

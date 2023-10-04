@@ -152,7 +152,7 @@ def update_curr_color(curr_color, step_color):
 
 
 def add_effector_pose_to_overall_display(prev_pos, position, curr_color, env):
-    env.p.addUserDebugLine(prev_pos, position, curr_color, parentObjectUniqueId=-1, lineWidth=LINE_WIDTH_TRAJ_DISPLAY)
+    env.bullet_client.addUserDebugLine(prev_pos, position, curr_color, parentObjectUniqueId=-1, lineWidth=LINE_WIDTH_TRAJ_DISPLAY)
 
 
 def extract_trajectories(individuals, period):
@@ -176,7 +176,7 @@ def extract_trajectories(individuals, period):
 
 
 def set_camera_plot_trajs():
-    ENV.p.resetDebugVisualizerCamera(
+    ENV.bullet_client.resetDebugVisualizerCamera(
         cameraDistance=0.9, cameraYaw=0, cameraPitch=200, cameraTargetPosition=[0, 0, 0.1]
     )
 

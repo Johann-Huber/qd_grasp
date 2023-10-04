@@ -17,7 +17,6 @@ import gym_envs.envs.src.env_constants as env_consts
 def get_controller_class(robot_kwargs):
     controller_type = robot_kwargs['controller_type']
 
-    #controller_type = consts.CONTROLLER
     CONTROLLERS_DICT = {
         'interpolate keypoints speed control grip': StandardWayPointsJointController,
         'interpolate keypoints finger synergies': SynergiesWayPointsJointController,
@@ -35,8 +34,6 @@ def get_controller_info(robot_kwargs, env_kwargs, algo_variant):
     n_keypoints = consts.NB_KEYPOINTS
     n_genes_per_keypoint = robot_kwargs['gene_per_keypoints']
     n_it_closing_grip = robot_kwargs['n_it_closing_grip']
-
-    #env_params = env_kwargs
 
     controllers_info_dict = {
         'interpolate keypoints speed control grip': {
@@ -113,7 +110,6 @@ def get_eval_kwargs(parsed_args, robot_kwargs, evo_process, bd_bounds, bd_flg, e
     return eval_kwargs
 
 
-
 def get_robot_kwargs(robot_name, object=None):
 
     env_name = env_consts.ROBOT_KWARGS[robot_name]['gym_env_name']
@@ -152,14 +148,12 @@ def get_env_kwargs(robot_name, object_name, robot_kwargs):
 
     env_id = robot_kwargs['env_name']
     steps_to_roll = robot_kwargs['nb_steps_to_rollout']
-    fixed_arm = False  # todo depreciated
     controller_type = robot_kwargs['controller_type']
 
     env_kwargs = {
         'id': env_id,
         'object_name': object_name,
         'steps_to_roll': steps_to_roll,
-        'fixed_arm': fixed_arm,
         'controller_type': controller_type,
     }
 
@@ -168,7 +162,6 @@ def get_env_kwargs(robot_name, object_name, robot_kwargs):
         env_kwargs['grip_slot'] = robot_kwargs['grip_slot']
 
     return env_kwargs
-
 
 
 def get_genotype_len(robot_kwargs, controller_info):
@@ -269,7 +262,6 @@ def get_qd_algo_args(cfg):
     pop_size = cfg['evo_proc']['pop_size']
     n_saved_ind_early_stop = cfg['evo_proc']['n_saved_ind_early_stop']
     n_budget_rollouts = cfg['evo_proc']['n_budget_rollouts']
-    #bd_flg = cfg['evo_proc']['bd_flg']
 
     evo_process = cfg['evo_proc']['evo_process']
     mut_flg = cfg['evo_proc']['mut_flg']
@@ -366,8 +358,8 @@ def initialize_cpu_multicore_data():
 
     ENV = gym.make(**ENV_KWARGS)  # Initialize env for each parallel worker
 
-    _, obj_vertices_poses = ENV.p.getMeshData(ENV.obj_id)
-    stabilized_obj_pose, _ = ENV.p.getBasePositionAndOrientation(ENV.obj_id)
+    _, obj_vertices_poses = ENV.bullet_client.getMeshData(ENV.obj_id)
+    stabilized_obj_pose, _ = ENV.bullet_client.getBasePositionAndOrientation(ENV.obj_id)
 
     EVAL_KWARGS = get_eval_kwargs(parsed_args=args,
                                   robot_kwargs=ROBOT_KWARGS,
@@ -379,7 +371,6 @@ def initialize_cpu_multicore_data():
                                   algo_variant=ALGO_VARIANT,
                                   robot=ROBOT)
 
-    # assert EVO_PROCESS in consts.MULTI_BD_EVO_PROCESSES
     if EVO_PROCESS in consts.MULTI_BD_EVO_PROCESSES:
         BD_INDEXES = consts.BD_METAPARAMS[BD_FLG]['bd_indexes']
         NOVELTY_METRIC = consts.BD_METAPARAMS[BD_FLG]['novelty_metric']
@@ -387,33 +378,8 @@ def initialize_cpu_multicore_data():
         BD_INDEXES = None
         NOVELTY_METRIC = 'minkowski'
 
-    # deal with Scoop parallelization
-    '''
-    creator.create('BehaviorDescriptor', list)
-    creator.create('GenInfo', dict)
-    creator.create('Info', dict)
-    if EVO_PROCESS in consts.MULTI_BD_EVO_PROCESSES:
-        creator.create('Novelty', list)
-    else:
-        creator.create('Novelty', base.Fitness, weights=(1.0,))
-
-    if EVO_PROCESS in consts.EVO_PROCESS_WITH_LOCAL_COMPETITION:
-        creator.create('Fit', base.Fitness, weights=(1.0, 1.0))  #  (novelty, local_quality)
-    elif ALGO_VARIANT in consts.ARCHIVE_BASED_NOVELTY_FITNESS_SELECTION_ALGO_VARIANTS:
-        creator.create('Fit', base.Fitness, weights=(1.0, 1.0))  #  (novelty, normalized_fitness)
-    else:
-        creator.create('Fit', base.Fitness, weights=(-1.0,))
-
-    creator.create('Individual', list, behavior_descriptor=creator.BehaviorDescriptor,
-                   novelty=creator.Novelty, fitness=creator.Fit, info=creator.Info,
-                   gen_info=creator.GenInfo)
-
-    evolutionary_process.set_creator(creator)
-    '''
-
     # Scoop requires each core to have the used metaparams loaded in RAM. Those args must therefore be initialized as
     # global variables.
-
     MULTICORE_SHARED_CFG = {
         'algorithm': ALGO_VARIANT,
 

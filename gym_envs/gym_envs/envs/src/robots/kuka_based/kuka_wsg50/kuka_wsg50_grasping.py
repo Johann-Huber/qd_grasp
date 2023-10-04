@@ -72,8 +72,8 @@ class KukaWsg50Grasping(RobotGrasping):
 
     def _load_model(self):
         cwd = Path(gym_envs.__file__).resolve().parent / "envs"
-        robot_id = self.p.loadSDF(str(cwd / "3d_models/robots/kuka_iiwa/kuka_gripper_end_effector.sdf"))[0]
-        self.p.resetBasePositionAndOrientation(
+        robot_id = self.bullet_client.loadSDF(str(cwd / "3d_models/robots/kuka_iiwa/kuka_gripper_end_effector.sdf"))[0]
+        self.bullet_client.resetBasePositionAndOrientation(
             robot_id,
             kw_consts.KUKA_WSG50_BASE_POSITION,
             kw_consts.KUKA_WSG50_BASE_ORIENTATION
@@ -115,7 +115,7 @@ class KukaWsg50Grasping(RobotGrasping):
 
     def _set_robot_default_state(self):
         for j_id, j_val in kw_consts.DEFAULT_JOINT_STATES.items():
-            self.p.resetJointState(self.robot_id, j_id, targetValue=j_val)
+            self.bullet_client.resetJointState(self.robot_id, j_id, targetValue=j_val)
 
     def _reset_robot(self):
         self._set_robot_default_state()

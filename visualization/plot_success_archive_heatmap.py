@@ -88,7 +88,7 @@ arrow_side = len_bin_x_touch / 2
 
 co_dim_x, co_dim_y, co_dim_z = len_bin_x_touch, len_bin_y_touch, len_bin_z_touch
 display_scale_factor = 4
-info_shape_contact = {"shapeType": ENV.p.GEOM_BOX,
+info_shape_contact = {"shapeType": ENV.bullet_client.GEOM_BOX,
                       "halfExtents": [
                           co_dim_x / display_scale_factor,
                           co_dim_y / display_scale_factor,
@@ -119,8 +119,8 @@ def extract_end_effector_orientation_at_touch(ind):
         nrmlized_pos_arm = ENV.get_joint_state(normalized=True)
 
         if info['touch']:
-            end_eff_or_quaterions = ENV.p.getLinkState(ENV.robot_id, ENV.end_effector_id, computeLinkVelocity=True)[1]
-            end_eff_or_euler = ENV.p.getEulerFromQuaternion(end_eff_or_quaterions)
+            end_eff_or_quaterions = ENV.bullet_client.getLinkState(ENV.robot_id, ENV.end_effector_id, computeLinkVelocity=True)[1]
+            end_eff_or_euler = ENV.bullet_client.getEulerFromQuaternion(end_eff_or_quaterions)
             break
 
     return end_eff_or_euler
@@ -191,9 +191,9 @@ def get_map_cells(inds_bds):
 
 
 def generate_obj_id(env, info_shape_contact, color):
-    base_collision_shape = env.p.createCollisionShape(**info_shape_contact)
-    base_vis_shape = env.p.createVisualShape(**info_shape_contact, rgbaColor=color)
-    return env.p.createMultiBody(baseMass=0,
+    base_collision_shape = env.bullet_client.createCollisionShape(**info_shape_contact)
+    base_vis_shape = env.bullet_client.createVisualShape(**info_shape_contact, rgbaColor=color)
+    return env.bullet_client.createMultiBody(baseMass=0,
                                  baseCollisionShapeIndex=base_collision_shape,
                                  baseVisualShapeIndex=base_vis_shape,
                                  useMaximalCoordinates=False)
@@ -269,19 +269,19 @@ def draw_heat_arrow(contact_pos, fit, end_eff_or_euler, min_fit, max_fit, env, i
     line_color = contact_obj_color[:3]
     line_width = cvt_fit2linewidth(fit=fit, max_fit=max_fit, min_fit=min_fit)
 
-    env.p.addUserDebugLine(
+    env.bullet_client.addUserDebugLine(
         lineFromXYZ=contact_pos,
         lineToXYZ=end_arrow_point,
         lineColorRGB=line_color,
         lineWidth=line_width
     )
-    env.p.addUserDebugLine(
+    env.bullet_client.addUserDebugLine(
         lineFromXYZ=end_arrow_right_side_point,
         lineToXYZ=end_arrow_point,
         lineColorRGB=line_color,
         lineWidth=line_width
     )
-    env.p.addUserDebugLine(
+    env.bullet_client.addUserDebugLine(
         lineFromXYZ=end_arrow_left_side_point,
         lineToXYZ=end_arrow_point,
         lineColorRGB=line_color,
@@ -291,7 +291,7 @@ def draw_heat_arrow(contact_pos, fit, end_eff_or_euler, min_fit, max_fit, env, i
     draw_success_archive_cell = False
     if draw_success_archive_cell:
         contact_obj_id = generate_obj_id(env=env, info_shape_contact=info_shape_contact, color=contact_obj_color)
-        env.p.resetBasePositionAndOrientation(contact_obj_id, contact_pos, init_obj_xyzw)
+        env.bullet_client.resetBasePositionAndOrientation(contact_obj_id, contact_pos, init_obj_xyzw)
 
 
 def display_success_archive_3d_arrows_heatmap(env, all_eff_pos_touch, fitnesses, all_end_eff_or_euler):
@@ -300,11 +300,11 @@ def display_success_archive_3d_arrows_heatmap(env, all_eff_pos_touch, fitnesses,
 
     env.reset(load='state')
     stabilize_simulation(env)
-    env.p.removeBody(env.robot_id)
+    env.bullet_client.removeBody(env.robot_id)
 
     all_contact_points = all_eff_pos_touch
 
-    init_obj_pos, init_obj_xyzw = env.p.getBasePositionAndOrientation(env.obj_id)
+    init_obj_pos, init_obj_xyzw = env.bullet_client.getBasePositionAndOrientation(env.obj_id)
     min_fit, max_fit = np.quantile(fitnesses, q=0.2), np.quantile(fitnesses, q=0.8)
 
     for contact_pos, fit, end_eff_or_euler in zip(all_contact_points, fitnesses, all_end_eff_or_euler):

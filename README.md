@@ -1,11 +1,28 @@
 # Quality Diversity for Grasping in Robotics (QD-Grasp)
 
-
-This code allows the generation of repertoires of diverse and high performing grasping trajectories, with Quality-Diversity methods.
-
-It also allow to reproduce results from the paper : "Quality Diversity under Sparse Reward and Sparse Interaction: Application to Grasping in Robotics" ([draft version](https://arxiv.org/abs/2308.05483))
-
 **Status:** *refactoring in progress*
+
+## About
+This code allows the generation of repertoires of diverse and high-performing grasping trajectories with Quality-Diversity methods.
+
+Visit the project webpage for more details: (*available soon*)
+
+### Supported platforms
+
+* Kuka iiwa + 2-fingers gripper (*kuka_wsg50*)
+* Kuka iiwa + Allegro hand (*kuka_allegro*) 
+* Baxter + 2-fingers gripper (*baxter_2f*)
+* Franka Emika Panda + 2-fingers gripper (*panda_2f*)
+* UR5 + SIH Schunk hand (*panda_2f*)
+
+Interested in applying QD methods to your robot? Please consider opening an issue or making a pull request to extend the set of supported platforms.
+
+### Associated Papers
+
+* *Quality Diversity under Sparse Reward and Sparse Interaction: Application to Grasping in Robotics*, Huber, J., Hélénon, F., Coninx, M., Ben Amar, F., Doncieux, S. (2023) ([draft version](https://arxiv.org/abs/2308.05483))
+* *Domain Randomization for Sim2real Transfer of Automatically Generated Grasping Datasets*, Huber, J., Hélénon, F., Watrelot, H., Ben Amar, F., Doncieux, S. (2023) (draft available soon)
+* *Learning to grasp: from somwhere to anywhere*, Hélénon, F., Huber, J., Ben Amar, F., Doncieux, S. (2023) (draft available soon)
+
 
 ## Before starting
 
@@ -35,7 +52,7 @@ Debug mode, to visualize each evaluation:
 python3 run_qd_grasp.py -a me_scs -r kuka_wsg50 -o ycb_power_drill -nbr 2000 -d
 ```
 
-Longer run:
+Longer run with scoop parallelization:
 ```
 python3 -m scoop run_qd_grasp.py -a me_scs -r kuka_wsg50 -o ycb_power_drill -nbr 25000
 ```
@@ -56,13 +73,20 @@ Visualise the success archive as fitness heatmap:
 python3 visualization/plot_success_archive_heatmap.py -r path_to_run_folder/
 ```
 
+### Domain-Randomization-based quality criteria 
+To compute the DR-based fitnesses for each generated success:
+```
+python3 data_analysis/dr_quality_criteria/compute_dr_criteria.py -r path_to_run_folder/
+```
+
 
 ## Ressources: 
 
 ### Quality diversity
+Contrary to standard single-objective methods, QD algorithms aims to optimize to generate a set of diverse and high-performing solutions to a given problem. Tutorials and papers:
 https://quality-diversity.github.io/
 
-### Compared methods
+### Supported methods
 Best performing QD algorithms on grasping:
 - **ME-scs**: A MAP-Elites variant that selects the successful individuals from the archive in priority.
 - **ME-fit**: A MAP-Elites variant that selects the best-performing individuals from the archive in priority. 
@@ -86,9 +110,8 @@ Other supported variants:
 
 
 ## TODO :
-* refactore & clean code
-* detailed readme
-
+* link to drafts
+* fix nslc args issue
 
 
 

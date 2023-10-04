@@ -1,0 +1,191 @@
+<?xml version="1.0"?>
+<robot name="ur5_sih_schunk" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <material name="gray">
+    <color rgba="0.5 0.5 0.5 1"/>
+  </material>
+
+  <material name="brown">
+    <color rgba="0.9 0.45 0.0 1"/>
+  </material>
+
+  <material name="white">
+    <color rgba="1.0 1.0 1.0 1"/>
+  </material>
+  
+  <material name="collision_only_white">
+    <color rgba="1.0 1.0 1.0 0.05"/>
+  </material>
+
+  <!--material name="silver">
+    <color rgba="0.75 0.75 0.75 1"/>
+  </material-->
+  <!--xacro:include filename="$(find schunk_sih_model)/urdf/sih_right.urdf.xacro" /-->
+  <xacro:include filename="$(find ur5_sih_schunk)/robots/urdf/sih_right.urdf.xacro"/>
+  <xacro:include filename="$(find ur_description)/urdf/ur5.urdf.xacro" />
+  
+  <!--xacro:arg name="name" default="ur5"/-->
+  <!--xacro:include filename="$(find ur_description)/urdf/ur.urdf.xacro"/-->
+  
+
+  <!--xacro:ur5_robot prefix=""/-->
+  <!-- ur5 -->
+  <xacro:ur5_robot prefix="" joint_limited="true"/>
+  <!--xacro:ur_robot name="ur5"/-->
+  
+
+
+  <link name="table_surface_link">
+    <inertial>
+      <mass value="1"/>
+      <!-- Inertia values were calculated to be consistent with the mass and
+           geometry size, assuming a uniform density. -->
+      <inertia ixx="0.0108" ixy="0" ixz="0" iyy="0.0083" iyz="0" izz="0.0042"/>
+    </inertial>
+    <visual>
+      <material name="brown" />
+      <geometry>
+        <box size="0.7 1.0 .05"/>
+      </geometry>
+    </visual>
+    <collision name="table_surface">
+      <geometry>
+        <box size="0.7 1.0 .05"/>
+      </geometry>
+    </collision>
+  </link>
+<!--
+  <link name="front_wall_link">
+    <inertial>
+      <mass value="1"/>
+      <inertia ixx="0.0108" ixy="0" ixz="0" iyy="0.0083" iyz="0" izz="0.0042"/>
+    </inertial>
+    <visual>
+      <material name="collision_only_white" />
+      <geometry>
+        <box size=".1 2.0 2.0"/>
+      </geometry>
+    </visual>
+    <collision name="wall">
+      <geometry>
+        <box size=".1 2.0 2.0"/>
+      </geometry>
+    </collision>
+  </link>
+  
+  <link name="back_wall_link">
+    <inertial>
+      <mass value="1"/>
+      <inertia ixx="0.0108" ixy="0" ixz="0" iyy="0.0083" iyz="0" izz="0.0042"/>
+    </inertial>
+    <visual>
+      <material name="white" />
+      <geometry>
+        <box size=".1 2.0 2.0"/>
+      </geometry>
+    </visual>
+    <collision name="wall">
+      <geometry>
+        <box size=".1 2.0 2.0"/>
+      </geometry>
+    </collision>
+  </link>
+  
+  <link name="left_side_wall_link">
+    <inertial>
+      <mass value="1"/>
+      <inertia ixx="0.0108" ixy="0" ixz="0" iyy="0.0083" iyz="0" izz="0.0042"/>
+    </inertial>
+    <visual>
+      <material name="collision_only_white" />
+      <geometry>
+        <box size="2.0 0.1 2.0"/>
+      </geometry>
+    </visual>
+    <collision name="wall">
+      <geometry>
+        <box size="2.0 0.1 2.0"/>
+      </geometry>
+    </collision>
+  </link>
+  
+  <link name="right_side_wall_link">
+    <inertial>
+      <mass value="1"/>
+      <inertia ixx="0.0108" ixy="0" ixz="0" iyy="0.0083" iyz="0" izz="0.0042"/>
+    </inertial>
+    <visual>
+      <material name="collision_only_white" />
+      <geometry>
+        <box size="2.0 0.1 2.0"/>
+      </geometry>
+    </visual>
+    <collision name="wall">
+      <geometry>
+        <box size="2.0 0.1 2.0"/>
+      </geometry>
+    </collision>
+  </link>
+!-->
+
+  <link name="ft_link" >
+    <visual>
+      <origin xyz="0 0 -${0.0375/2}" rpy="0 0 0" />
+      <material name="gray" />
+      <geometry>
+        <cylinder radius="0.05" length="0.0375" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -${0.0375/2}" rpy="0 0 0" />
+      <material name="gray" />
+      <geometry>
+        <cylinder radius="0.03" length="0.03" />
+      </geometry>
+    </collision>
+  </link>
+
+  <xacro:sih_right parent="ft_link" prefix="schunk_sih_right">
+    <!--origin xyz="0 0 0" rpy="0 0 0" /-->
+	  <origin rpy="0 0 ${3.14159/2.0}" xyz="0 0 0"/>
+  </xacro:sih_right>
+
+  <joint name="ft_joint" type="fixed" >
+    <origin xyz="0 0 0.0375"  rpy= "0 0 0" />
+    <parent link="tool0" />
+    <child link="ft_link" />
+  </joint>
+<!--
+  <joint name="table_surface_joint" type="fixed" >
+    <origin xyz=".28 .33 -.03"  rpy= "0 0 0" />
+    <parent link="base_link" />
+    <child link="table_surface_link" />
+  </joint>
+
+
+  <joint name="back_wall_joint" type="fixed" >
+    <origin xyz=".63 .6 0"  rpy= "0 0 0" />
+    <parent link="base_link" />
+    <child link="back_wall_link" />
+  </joint>
+  
+  <joint name="front_wall_joint" type="fixed" >
+    <origin xyz="-0.22 .6 0"  rpy= "0 0 0" />
+    <parent link="base_link" />
+    <child link="front_wall_link" />
+  </joint>
+  
+  <joint name="left_side_wall_joint" type="fixed" >
+    <origin xyz=".28 1.0 0"  rpy= "0 0 0" />
+    <parent link="base_link" />
+    <child link="left_side_wall_link" />
+  </joint>
+  
+  <joint name="right_side_wall_joint" type="fixed" >
+    <origin xyz=".28 -0.3 0"  rpy= "0 0 0" />
+    <parent link="base_link" />
+    <child link="right_side_wall_link" />
+  </joint>
+!-->
+  
+</robot>

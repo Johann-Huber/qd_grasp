@@ -7,7 +7,7 @@ from abc import abstractmethod
 from .controller_root import ControllerRoot
 from . import controller_params as ctrl_params
 
-import utils.constants as consts
+import gym_envs.envs.src.env_constants as env_consts
 
 
 class ControllerSpace(ControllerRoot):
@@ -142,27 +142,20 @@ class InverseKinematicsController(ControllerSpace):
             self._compute_trajectory_ik_way_points(individual=individual)
 
 
-        #pdb.set_trace()
-        #pass
-
     def _get_ik_space_lims(self):
         return {
-            'min_x_val': consts.CARTESIAN_SCENE_POSE_BOUNDARIES[self._env_name]['min_x_val'],
-            'min_y_val': consts.CARTESIAN_SCENE_POSE_BOUNDARIES[self._env_name]['min_y_val'],
-            'min_z_val': consts.CARTESIAN_SCENE_POSE_BOUNDARIES[self._env_name]['min_z_val'],
+            'min_x_val': env_consts.CARTESIAN_SCENE_POSE_BOUNDARIES[self._env_name]['min_x_val'],
+            'min_y_val': env_consts.CARTESIAN_SCENE_POSE_BOUNDARIES[self._env_name]['min_y_val'],
+            'min_z_val': env_consts.CARTESIAN_SCENE_POSE_BOUNDARIES[self._env_name]['min_z_val'],
 
-            'max_x_val': consts.CARTESIAN_SCENE_POSE_BOUNDARIES[self._env_name]['max_x_val'],
-            'max_y_val': consts.CARTESIAN_SCENE_POSE_BOUNDARIES[self._env_name]['max_y_val'],
-            'max_z_val': consts.CARTESIAN_SCENE_POSE_BOUNDARIES[self._env_name]['max_z_val'],
+            'max_x_val': env_consts.CARTESIAN_SCENE_POSE_BOUNDARIES[self._env_name]['max_x_val'],
+            'max_y_val': env_consts.CARTESIAN_SCENE_POSE_BOUNDARIES[self._env_name]['max_y_val'],
+            'max_z_val': env_consts.CARTESIAN_SCENE_POSE_BOUNDARIES[self._env_name]['max_z_val'],
         }
 
     def _compute_trajectory_ik_way_points(self, individual):
         interp_x = np.linspace(0, self.nb_iter, 4)[1:].astype(int).tolist()
 
-        #  1) convertir les données normalisées en coordonées cartésiennes
-        #  [-1; 1] --> [X_MIN, X_MAX]
-
-        #  TANT QU'ON EST EN NORMALISÉ (problème d'exploration difficile fortement contraint)
         approach_keypoint_pose, approach_keypoint_or = individual[:3], individual[3:6]
         prehension_keypoint_pose, prehension_keypoint_or = individual[6:9], individual[9:12]
         verification_keypoint_pose, verification_keypoint_or = individual[12:15], individual[15:18]
@@ -171,7 +164,7 @@ class InverseKinematicsController(ControllerSpace):
         gen_val_range = gene_val_max - gene_val_min
 
         ik_lims = self._get_ik_space_lims()
-        #pdb.set_trace()
+
         approach_min, approach_max = \
             np.array([ik_lims['min_x_val'], ik_lims['min_y_val'], ik_lims['min_z_val']]), \
             np.array([ik_lims['max_x_val'], ik_lims['max_y_val'], ik_lims['max_z_val']])
@@ -187,7 +180,7 @@ class InverseKinematicsController(ControllerSpace):
         pose_approach_range, pose_prehension_range, pose_verification_range = \
             approach_max - approach_min, prehension_max - prehension_min, verification_max - verification_min
 
-        euler_min, euler_max = consts.MIN_EULER_VAL, consts.MAX_EULER_VAL
+        euler_min, euler_max = env_consts.MIN_EULER_VAL, env_consts.MAX_EULER_VAL
         euler_range = euler_max - euler_min
 
         approach_keypoint_pose_xyz = \
@@ -213,7 +206,6 @@ class InverseKinematicsController(ControllerSpace):
                 prehension_keypoint_or_euler, verification_keypoint_pose_xyz, verification_keypoint_or_euler = \
                     self._debug_fixed_way_points()
 
-        #  Note: la commande sera en IK
         waypoints_6dof = {
             0: {
                 'xyz': approach_keypoint_pose_xyz,
@@ -269,7 +261,6 @@ class InverseKinematicsController(ControllerSpace):
 
         if i_step > self.nb_iter:
             raise RuntimeError(f'Too large i_step ({i_step} > len_episode={self.nb_iter})')
-
 
         is_pos_locked = self.lock_end_eff_start_time <= i_step <= self.lock_end_eff_end_time \
             if self.grip_time is not None else False

@@ -1,0 +1,63 @@
+<?xml version="1.0" ?>
+<robot name="baxter" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:arg name="limit_scale" default="1"/> <!--increase for higher velocities-->
+  <xacro:arg name="fixed_joints" default="{}"/>
+
+  <xacro:arg name="gazebo" default="false"/>
+  <xacro:arg name="pedestal" default="true"/>
+  <!-- Baxter Base URDF -->
+  <xacro:include filename="baxter_base/baxter_base.urdf.xacro">
+    <xacro:arg name="gazebo" value="${gazebo}"/>
+    <xacro:arg name="limit_scale" value="${limit_scale}"/>
+    <xacro:arg name="fixed_joints" value="${fixed_joints}"/>
+  </xacro:include>
+
+  <!-- Baxter Pedestal -->
+  <xacro:if value="$(arg pedestal)">
+    <xacro:include filename="pedestal/pedestal.xacro">
+      <xacro:arg name="gazebo" value="${gazebo}"/>
+    </xacro:include>
+  </xacro:if>
+  
+  
+  
+  <!--right and left grippers share the same parameters-->
+  <xacro:arg name="finger" default="extended_narrow"/>
+  <xacro:arg name="slot" default="2"/>
+  <xacro:arg name="tip" default="paddle_tip"/>
+  <xacro:arg name="grasp" default="inner"/>
+
+  <!-- Left End Effector -->
+  <!--xacro:include filename="left_end_effector.urdf.xacro" /-->
+  <xacro:include filename="rethink_electric_gripper.xacro" />
+  <xacro:rethink_electric_gripper side="left"
+                                  l_finger="$(arg finger)"
+                                  l_finger_slot="$(arg slot)"
+                                  l_finger_tip="$(arg tip)"
+                                  l_finger_grasp="$(arg grasp)"
+                                  r_finger="$(arg finger)"
+                                  r_finger_slot="$(arg slot)"
+                                  r_finger_tip="$(arg tip)"
+                                  r_finger_grasp="$(arg grasp)"
+                                  limit_scale="$(arg limit_scale)"
+                                  fixed_joints="${$(arg fixed_joints)}"
+                                  />
+
+
+  <!-- Right End Effector -->
+  <!--xacro:include filename="right_end_effector.urdf.xacro" /-->
+  <xacro:rethink_electric_gripper side="right"
+                                  l_finger="$(arg finger)"
+                                  l_finger_slot="$(arg slot)"
+                                  l_finger_tip="$(arg tip)"
+                                  l_finger_grasp="$(arg grasp)"
+                                  r_finger="$(arg finger)"
+                                  r_finger_slot="$(arg slot)"
+                                  r_finger_tip="$(arg tip)"
+                                  r_finger_grasp="$(arg grasp)"
+                                  limit_scale="$(arg limit_scale)"
+                                  fixed_joints="${$(arg fixed_joints)}"
+                                  />
+
+
+</robot>

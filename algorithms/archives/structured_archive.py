@@ -3,6 +3,7 @@ import pdb
 import numpy as np
 import random
 import utils.constants as consts
+import gym_envs.envs.src.env_constants as env_consts
 
 from .archive import Archive
 
@@ -23,9 +24,9 @@ QD_STRUCTURED_ARCHIVE = {
 
 #------------------------------------------------
 # DIMENSIONS FOR CARTESIAN OPERATIONAL SPACE
-MIN_X_VAL, MAX_X_VAL = consts.MIN_X_VAL, consts.MAX_X_VAL
-MIN_Y_VAL, MAX_Y_VAL = consts.MIN_Y_VAL, consts.MAX_Y_VAL
-MIN_Z_VAL, MAX_Z_VAL = consts.MIN_Z_VAL, consts.MAX_Z_VAL
+MIN_X_VAL, MAX_X_VAL = env_consts.MIN_X_VAL, env_consts.MAX_X_VAL
+MIN_Y_VAL, MAX_Y_VAL = env_consts.MIN_Y_VAL, env_consts.MAX_Y_VAL
+MIN_Z_VAL, MAX_Z_VAL = env_consts.MIN_Z_VAL, env_consts.MAX_Z_VAL
 
 # (0.05 : precision of ~1 cm³) : 2000 cells per submap
 N_BINS_PER_DIM_POS_X = 20  # (0.5-(-0.5))/0.05
@@ -39,9 +40,9 @@ N_BINS_PER_QUATERNION_DIM = 2
 
 #------------------------------------------------
 # DIMENSIONS FOR CARTESIAN HAND-OBJECT TOUCH SPACE
-MIN_X_TOUCH_VAL, MAX_X_TOUCH_VAL = consts.MIN_X_TOUCH_VAL, consts.MAX_X_TOUCH_VAL
-MIN_Y_TOUCH_VAL, MAX_Y_TOUCH_VAL = consts.MIN_Y_TOUCH_VAL, consts.MAX_Y_TOUCH_VAL
-MIN_Z_TOUCH_VAL, MAX_Z_TOUCH_VAL = consts.MIN_Z_TOUCH_VAL, consts.MAX_Z_TOUCH_VAL
+MIN_X_TOUCH_VAL, MAX_X_TOUCH_VAL = env_consts.MIN_X_TOUCH_VAL, env_consts.MAX_X_TOUCH_VAL
+MIN_Y_TOUCH_VAL, MAX_Y_TOUCH_VAL = env_consts.MIN_Y_TOUCH_VAL, env_consts.MAX_Y_TOUCH_VAL
+MIN_Z_TOUCH_VAL, MAX_Z_TOUCH_VAL = env_consts.MIN_Z_TOUCH_VAL, env_consts.MAX_Z_TOUCH_VAL
 
 # (0.02 : precision of 2 cm³) : 1728 cells per submap (a significant part of them cannot be triggered, depending on the object ...
 # resulting into an order of magnitude comparable to standard benchmark for QD methods)

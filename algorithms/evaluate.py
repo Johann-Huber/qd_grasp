@@ -45,7 +45,8 @@ class EnergyFitMeasure:
 def evaluate_grasp_ind(individual, env, eval_kwargs):
 
     episode_length = eval_kwargs['nb_iter']
-    env.reset(load='state' if consts.RESET_MODE else 'all')
+
+    env.reset()
 
     controller = init_controller(
         individual=individual,
@@ -142,7 +143,7 @@ def evaluate_grasp_ind(individual, env, eval_kwargs):
 
     if is_there_grasp:
         is_there_grasp = do_safechecks_traj_success(
-            env=env, controller=controller,
+            env=env, controller=controller, ind=individual,
             **eval_kwargs
         )
 
@@ -275,7 +276,7 @@ def get_energy_fit(energy_fit_measure):
     return (-1) * energy_fit_measure.energy_consumption_cumulated
 
 
-def get_autocollide_outputs(evo_process, bd_len, algo_variant, robot, is_already_touched, reward_cumulated, verbose=True, **kwargs):
+def get_autocollide_outputs(evo_process, bd_len, algo_variant, robot, is_already_touched, reward_cumulated, verbose=False, **kwargs):
 
     if verbose:
         print('AUTOCOLLIDE !' + 20 * '=')
@@ -346,7 +347,7 @@ def stabilize_simulation(env, n_step_stabilizing=None):
     n_iter_stab = consts.N_ITER_STABILIZING_SIM if n_step_stabilizing is None else n_step_stabilizing
     for i in range(n_iter_stab):
         #print('i=', i)
-        env.p.stepSimulation()
+        env.bullet_client.stepSimulation()
 
 
 def build_invalid_behavior_vector(evo_process, bd_len):
@@ -391,7 +392,9 @@ def do_env_stabilization_check(env, add_iter, controller):
 
 
 def do_traj_redeploiment_safecheck(
-        env, controller, nb_iter, n_reset_safecheck, init_rand_pos=None, do_noise_joints_pos=False
+    env, nb_iter, n_reset_safecheck, ind, controller_class, controller_info, add_iter,
+    obj_init_state_offset=None, do_noise_joints_pos=False, do_noise_dynamics=False,
+    force_state_load=False
 ):
     """Deplay controller's trajectory nb_iter times, to make sure it always produce a successful grasp.
      Returns True is all attempts are successful, False otherwise. """
@@ -399,27 +402,63 @@ def do_traj_redeploiment_safecheck(
     assert nb_iter > 0
     is_there_grasp = True
 
-    for _ in range(n_reset_safecheck):
-        env.reset(init_pos_offset=init_rand_pos, do_noise_joints_pos=do_noise_joints_pos)
+    for i in range(n_reset_safecheck):
+        env.reset(
+            obj_init_state_offset=obj_init_state_offset,
+            do_noise_dynamics=do_noise_dynamics,
+            force_state_load=force_state_load,
+            do_noise_joints_pos=do_noise_joints_pos
+        )
         nrmlized_pos_arm = env.get_joint_state(normalized=True)
+        nrmlized_pos_arm_prev = nrmlized_pos_arm
         #end_effector_pos = env.get_end_effector_state()
-        controller.reset_rolling_attributes()
+
+        controller = init_controller(
+            individual=ind,
+            controller_class=controller_class,
+            controller_info=controller_info,
+            env=env
+        )
+        im = InteractionMeasures()
+
+        #print('Object pose offset : ', env.get_object_pose())
+        #print('Object state offset : ', env.get_object_state(euler_orient=True))
 
         for i_step in range(nb_iter):
             action = controller.get_action(i_step=i_step,
                                            nrmlized_pos_arm=nrmlized_pos_arm,
                                            env=env)
             _, reward, done, info = env.step(action)
+
             nrmlized_pos_arm = env.get_joint_state(normalized=True)
+
+            if info['touch'] and not im.is_already_touched:
+                # First touch of object
+                im.pos_touch_time = info['end effector position']
+                im.is_already_touched = True
+
+                # Close grip at first touch
+                controller.update_grip_time(grip_time=i_step)
+                controller.last_i = i_step
+                nrmlized_pos_arm = nrmlized_pos_arm_prev
+
+            #time.sleep(0.005)
 
         if not info['is_success']:
             is_there_grasp = False
             break  #  fails : early stop
 
+        is_stable_grasp = do_env_stabilization_check(env=env, add_iter=add_iter, controller=controller)
+        #print(f'safecheck grasps robustness : is_stable_grasp={is_stable_grasp}')
+        if not is_stable_grasp:
+            is_there_grasp = False
+            break  #  fails : early stop
+
+    #print('is_there_grasp=', is_there_grasp)
     return is_there_grasp
 
 
-def do_safechecks_traj_success(robot, env, add_iter, controller, nb_iter, n_reset_safecheck, **kwargs):
+def do_safechecks_traj_success(robot, env, add_iter, controller, nb_iter, n_reset_safecheck, ind, **kwargs):
     is_stable_grasp = do_env_stabilization_check(env=env, add_iter=add_iter, controller=controller)
     if not is_stable_grasp:
         return False
@@ -429,8 +468,11 @@ def do_safechecks_traj_success(robot, env, add_iter, controller, nb_iter, n_rese
         return True
 
     is_grasp_reproducible = do_traj_redeploiment_safecheck(
-        env=env, controller=controller, nb_iter=nb_iter, n_reset_safecheck=n_reset_safecheck
+        env=env, nb_iter=nb_iter, n_reset_safecheck=n_reset_safecheck, ind=ind,
+        controller_class=kwargs['controller_class'], controller_info=kwargs['controller_info'],
+        add_iter=add_iter
     )
+
     return is_grasp_reproducible
 
 

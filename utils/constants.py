@@ -1,6 +1,7 @@
 
 import pdb
 
+import numpy as np
 import pathlib
 from enum import Enum
 import os
@@ -23,11 +24,11 @@ SERENE_QD_VARIANTS = ['serene']
 
 ELITE_STRUCTURED_ARCHIVE_ALGO_VARIANTS = ['me_scs', 'me_rand', 'me_fit']
 ELITE_NOVELTY_STRUCTURED_ARCHIVE_ALGO_VARIANTS = ['me_nov', 'me_nov_scs', 'me_nov_fit']
-NOVELTY_ARCHIVE_ALGO_VARIANTS = ['ns', 'nsmbs']
+NOVELTY_ARCHIVE_ALGO_VARIANTS = ['ns', 'nsmbs'] + ['nslc']  # todo fix nslc
 ARCHIVE_LESS_ALGO_VARIANTS = ['random', 'fit']
 
 POP_BASED_RANDOM_SELECTION_ALGO_VARIANTS = POP_BASED_BASELINES_ALGO_VARIANTS + NSMBS_ALGO_VARIANTS + SERENE_QD_VARIANTS
-#pdb.set_trace()
+
 
 ELITE_STRUCTURED_ARCHIVE_SUCCESS_BASED_SELECTION_ALGO_VARIANTS = ['me_scs']
 ARCHIVE_BASED_RANDOM_SELECTION_ALGO_VARIANTS = ['me_rand']
@@ -304,6 +305,7 @@ REAL_SCENE = True  #False
 LOCAL_REAL_SCENE = os.getcwd() + '/pybullet_data/'
 ROOT_REAL_SCENE = LOCAL_REAL_SCENE
 BULLET_TABLE_URDF_FILE_RPATH_REAL_SCENE = ROOT_REAL_SCENE + 'table/table.urdf'
+BULLET_UR5_TABLE_URDF_FILE_RPATH_REAL_SCENE = ROOT_REAL_SCENE + 'table/table_ur5.urdf'
 
 LOCAL_PATH_SIM2REAL_SCENE_FLG = REAL_SCENE  # trigger sim2real scene
 
@@ -321,11 +323,10 @@ BULLET_OBJECT_DEFAULT_ORIENTATION = [0, 0, 0, 1]  # initial orientation of the o
 BULLET_DEFAULT_N_STEPS_TO_ROLL = 1  # nb time to call p.stepSimulation within one step (depends on the robot)
 
 BULLET_DEFAULT_DISPLAY_FLG = False  # whether to display steps
-BULLET_DEFAULT_GRIP_DISPLAY_FLG = False  # whether to display the end effector trajectory
 
 ENV_DEFAULT_INIT_STATE = None
 
-BULLET_DUMMY_OBS = [None]  # returned observation vector when object is not initialized
+BULLET_DUMMY_OBS = None
 
 
 #----------------------------------------------------------------------------------------------------------------------#
@@ -334,7 +335,7 @@ BULLET_DUMMY_OBS = [None]  # returned observation vector when object is not init
 
 
 # NORMALIZATION
-# (bellow values have been defined w.r.t. measured limits of distributions on preliminary experimentS)
+# (bellow values have been defined w.r.t. measured limits of distributions on preliminary experiments)
 FITNESS_OBJECT_STATE_VARIANCE_MIN = -0.1
 FITNESS_OBJECT_STATE_VARIANCE_MAX = 0.
 FITNESS_TOUCH_VARIANCE_MIN = -200
@@ -349,39 +350,6 @@ SUPPORTED_PREHENSION_CRITERIA_STR = ['mono_eval']
 
 # NSLC
 K_NN_LOCAL_QUALITY = 50
-
-#----------------------------------------------------------------------------------------------------------------------#
-# BOUNDARIES FOR GENOME-TO-6DoFpose conversion (cartesian controllers)
-#----------------------------------------------------------------------------------------------------------------------#
-
-
-CARTESIAN_SCENE_POSE_BOUNDARIES = {
-    'kuka_allegro_grasping-v0': {
-        'min_x_val': -0.4, 'max_x_val': 0.4,
-        'min_y_val': -0.1, 'max_y_val': 0.3,
-        'min_z_val': -0.3, 'max_z_val': 0.1,
-    },
-    'kuka_wsg50_grasping-v0': {
-        'min_x_val': -0.5, 'max_x_val': 0.5,
-        'min_y_val': -0.2, 'max_y_val': 0.5,
-        'min_z_val': -0.2, 'max_z_val': 0.3,
-    },
-}
-
-
-MIN_X_VAL, MAX_X_VAL = -0.5, 0.5
-MIN_Y_VAL, MAX_Y_VAL = -0.2, 0.5
-MIN_Z_VAL, MAX_Z_VAL = -0.2, 0.3
-
-MIN_X_TOUCH_VAL, MAX_X_TOUCH_VAL = MIN_X_VAL, MAX_X_VAL
-MIN_Y_TOUCH_VAL, MAX_Y_TOUCH_VAL = MIN_Y_VAL, MAX_Y_VAL
-MIN_Z_TOUCH_VAL, MAX_Z_TOUCH_VAL = MIN_Z_VAL, MAX_Z_VAL
-
-MIN_X_VERIF_VAL, MAX_X_VERIF_VAL = MIN_X_VAL, MAX_X_VAL
-MIN_Y_VERIF_VAL, MAX_Y_VERIF_VAL = MIN_Y_VAL, MAX_Y_VAL
-MIN_Z_VERIF_VAL, MAX_Z_VERIF_VAL = MIN_Z_VAL, MAX_Z_VAL
-
-MIN_EULER_VAL, MAX_EULER_VAL = -2*3.14, 2*3.14
 
 
 #----------------------------------------------------------------------------------------------------------------------#
@@ -432,4 +400,31 @@ serene_archive_n_agents2add = 5
 #----------------------------------------------------------------------------------------------------------------------#
 
 TIME_SLEEP_SMOOTH_DISPLAY_IN_SEC = 0.01
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+# DOMAIN RANDOMIZATION QUALITY CRITERIA
+#----------------------------------------------------------------------------------------------------------------------#
+
+# perception noise
+N_NOISY_TARGETS = 3# 200
+OBJ_STATE_DR_INIT_POS_VARIANCE_IN_M = 0.005
+OBJ_STATE_DR_INIT_ORIENT_EULER_VARIANCE_IN_DEG = 0.2
+OBJ_STATE_DR_INIT_ORIENT_EULER_VARIANCE_IN_RAD = OBJ_STATE_DR_INIT_ORIENT_EULER_VARIANCE_IN_DEG  * np.pi / 180
+
+# joint control noise
+N_NOISY_JOINTS_DEPLOYEMENTS = 3# 200
+NOISE_JOINT_STATES_MU = 0.0
+NOISE_JOINT_STATES_SIGMA = 0.002
+
+# dynamics approximation noise
+N_NOISY_DYNAMICS_DEPLOYEMENTS = 3 # 50
+ROLLING_FRICTION_DOMAIN_RAND_MIN_VALUE = 0.01
+ROLLING_FRICTION_DOMAIN_RAND_MAX_VALUE = 0.04
+SPINNING_FRICTION_DOMAIN_RAND_MIN_VALUE = 0.1
+SPINNING_FRICTION_DOMAIN_RAND_MAX_VALUE = 0.4
+
+# mixture of the 3 domain randomization approaches
+N_NOISY_MIXTURE = 3 # 100
+
 
