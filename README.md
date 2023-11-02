@@ -5,8 +5,7 @@
 ## About
 This code allows the generation of repertoires of diverse and high-performing grasping trajectories with Quality-Diversity methods.
 
-Visit the project webpage for more details: (*available soon*)
-
+Visit the **project webpage** for more details: [https://qdgrasp.github.io/](https://qdgrasp.github.io/)
 ### Supported platforms
 
 * Kuka iiwa + 2-fingers gripper (*kuka_wsg50*)
@@ -20,8 +19,8 @@ Interested in applying QD methods to your robot? Please consider opening an issu
 ### Associated Papers
 
 * *Quality Diversity under Sparse Reward and Sparse Interaction: Application to Grasping in Robotics*, Huber, J., Hélénon, F., Coninx, M., Ben Amar, F., Doncieux, S. (2023) ([draft version](https://arxiv.org/abs/2308.05483))
-* *Domain Randomization for Sim2real Transfer of Automatically Generated Grasping Datasets*, Huber, J., Hélénon, F., Watrelot, H., Ben Amar, F., Doncieux, S. (2023) (draft available soon)
-* *Learning to grasp: from somwhere to anywhere*, Hélénon, F., Huber, J., Ben Amar, F., Doncieux, S. (2023) (draft available soon)
+* *Domain Randomization for Sim2real Transfer of Automatically Generated Grasping Datasets*, Huber, J., Hélénon, F., Watrelot, H., Ben Amar, F., Doncieux, S. (2023) ([draft version](https://arxiv.org/abs/2310.04517))
+* *Learning to grasp: from somwhere to anywhere*, Hélénon, F., Huber, J., Ben Amar, F., Doncieux, S. (2023) ([draft version](https://arxiv.org/abs/2310.04349))
 
 
 ## Before starting

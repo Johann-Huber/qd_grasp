@@ -30,10 +30,8 @@ class RobotGrasping(Env):
             table_label=env_consts.TableLabel.STANDARD_TABLE,
             **kwargs
             ):
-
         self.bullet_client = None  # bullet physics client
         self.physics_client_id = None  # bullet physics client id
-        self._run_name = None  # export path for local bullet save
         self.sim_render = None  # manage simulation rendering
         self.sim_engine = None  # manage simulation engine
         self.initial_state = None  # robot initial state (used in robot_env)
@@ -79,7 +77,6 @@ class RobotGrasping(Env):
 
     def _init_attributes(self, run_name, display, table_label, kwargs):
 
-        self._run_name = run_name
         self._init_bullet_physics_client(display=display)
 
         sim_engine_kwargs = {
