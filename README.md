@@ -2,8 +2,8 @@
 
 **Status:** *refactoring in progress*
 
-![](https://github.com/Johann-Huber/qd_grasp/assets/qd_grasp_franka_mug_scs_crop.gif)
-![](https://github.com/Johann-Huber/qd_grasp/assets/qd_grasp_schunk_mug_2_scs_crop.gif)
+![](assets/qd_grasp_franka_mug_scs_crop.gif)
+![](assets/qd_grasp_schunk_mug_2_scs_crop.gif)
 
 ## About
 This code allows the generation of repertoires of diverse and high-performing grasping trajectories with Quality-Diversity methods.
