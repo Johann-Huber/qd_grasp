@@ -1,7 +1,5 @@
 # Quality Diversity for Grasping in Robotics (QD-Grasp)
 
-**Status:** *refactoring in progress*
-
 ![](assets/qd_grasp_franka_mug_scs_crop.gif)
 ![](assets/qd_grasp_schunk_mug_2_scs_crop.gif)
 
