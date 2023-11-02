@@ -109,7 +109,6 @@ Other supported variants:
 
 
 ## TODO :
-* link to drafts
 * fix nslc args issue
 
 
