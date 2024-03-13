@@ -38,9 +38,7 @@ python3 -m venv qdg
 source qdg/bin/activate
 ```
 ```
-pip3 install -r requirements.txt
-pip3 install -e gym_envs
-pip3 install -e .
+./installer.sh
 ```
 
 ## Examples
