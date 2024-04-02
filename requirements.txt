@@ -1,4 +1,4 @@
-setuptools==58.1.0
+setuptools
 qibullet
 seaborn
 pyquaternion
